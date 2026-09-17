@@ -501,12 +501,45 @@ router.post('/student/:studentId/respond', async (req: Request, res: Response): 
   }
 });
 
+// Helper to resolve student by id, externalId, or email
+async function resolveStudent(identifier: any, emailHint?: string) {
+  const numId = Number(identifier);
+  const strId = String(identifier || '').trim();
+  const email = emailHint ? String(emailHint).trim().toLowerCase() : '';
+
+  let student = null;
+  if (!isNaN(numId) && numId > 0) {
+    student = await prisma.student.findUnique({ where: { id: numId } });
+  }
+  if (!student && strId) {
+    student = await prisma.student.findFirst({
+      where: {
+        OR: [
+          { externalId: strId },
+          { email: strId.toLowerCase() },
+          ...(email ? [{ email }] : []),
+        ],
+      },
+    });
+  }
+  if (!student && email) {
+    student = await prisma.student.findFirst({
+      where: { email },
+    });
+  }
+  return student;
+}
+
 // GET /api/drives/student/:studentId/notifications - Fetch simulated email alerts
 router.get('/student/:studentId/notifications', async (req: Request, res: Response): Promise<void> => {
   try {
-    const studentId = Number(req.params.studentId);
+    const student = await resolveStudent(req.params.studentId, (req as any).user?.email);
+    if (!student) {
+      res.json({ notifications: [] });
+      return;
+    }
     const notifications = await prisma.notification.findMany({
-      where: { studentId },
+      where: { studentId: student.id },
     });
     res.json({ notifications });
   } catch (error: any) {
@@ -517,8 +550,7 @@ router.get('/student/:studentId/notifications', async (req: Request, res: Respon
 // GET /api/drives/student/:studentId/profile - Fetch student profile
 router.get('/student/:studentId/profile', async (req: Request, res: Response): Promise<void> => {
   try {
-    const studentId = Number(req.params.studentId);
-    const student = await prisma.student.findUnique({ where: { id: studentId } });
+    const student = await resolveStudent(req.params.studentId, (req as any).user?.email);
     if (!student) {
       res.status(404).json({ error: 'Student not found' });
       return;
@@ -532,11 +564,16 @@ router.get('/student/:studentId/profile', async (req: Request, res: Response): P
 // PUT /api/drives/student/:studentId/profile - Update mandatory student profile (Photo, Resume URL, Skills)
 router.put('/student/:studentId/profile', async (req: Request, res: Response): Promise<void> => {
   try {
-    const studentId = Number(req.params.studentId);
+    const student = await resolveStudent(req.params.studentId, (req as any).user?.email || req.body?.email);
+    if (!student) {
+      res.status(404).json({ error: 'Student not found' });
+      return;
+    }
+
     const { name, phone, branch, cgpa, skills, resumeUrl, profileImage, bio } = req.body;
 
     const updated = await prisma.student.update({
-      where: { id: studentId },
+      where: { id: student.id },
       data: {
         ...(name ? { name } : {}),
         ...(phone ? { phone } : {}),

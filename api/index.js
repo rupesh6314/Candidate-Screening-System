@@ -727,7 +727,9 @@ var localDb = {
     },
     async update({ where, data }) {
       const db = loadLocalData();
-      const idx = db.students.findIndex((s) => s.id === where.id || s.externalId === where.externalId);
+      const idx = db.students.findIndex(
+        (s) => where.id !== void 0 && (s.id === where.id || String(s.id) === String(where.id) || String(s.externalId) === String(where.id)) || where.externalId !== void 0 && String(s.externalId) === String(where.externalId) || where.email !== void 0 && s.email && s.email.toLowerCase() === String(where.email).toLowerCase()
+      );
       if (idx >= 0) {
         db.students[idx] = { ...db.students[idx], ...data, updatedAt: (/* @__PURE__ */ new Date()).toISOString() };
         saveLocalData(db);
@@ -1162,8 +1164,9 @@ router.post("/change-password", async (req, res, next) => {
     const student = await prisma.student.findFirst({
       where: {
         OR: [
-          ...studentId ? [{ id: studentId }] : [],
-          ...email ? [{ email: email.toLowerCase().trim() }] : []
+          ...studentId ? [{ id: studentId }, { externalId: String(studentId) }] : [],
+          ...email ? [{ email: email.toLowerCase().trim() }] : [],
+          ...req.user?.email ? [{ email: req.user.email.toLowerCase().trim() }] : []
         ]
       }
     });
@@ -3924,11 +3927,41 @@ router8.post("/student/:studentId/respond", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to submit response" });
   }
 });
+async function resolveStudent(identifier, emailHint) {
+  const numId = Number(identifier);
+  const strId = String(identifier || "").trim();
+  const email = emailHint ? String(emailHint).trim().toLowerCase() : "";
+  let student = null;
+  if (!isNaN(numId) && numId > 0) {
+    student = await prisma.student.findUnique({ where: { id: numId } });
+  }
+  if (!student && strId) {
+    student = await prisma.student.findFirst({
+      where: {
+        OR: [
+          { externalId: strId },
+          { email: strId.toLowerCase() },
+          ...email ? [{ email }] : []
+        ]
+      }
+    });
+  }
+  if (!student && email) {
+    student = await prisma.student.findFirst({
+      where: { email }
+    });
+  }
+  return student;
+}
 router8.get("/student/:studentId/notifications", async (req, res) => {
   try {
-    const studentId = Number(req.params.studentId);
+    const student = await resolveStudent(req.params.studentId, req.user?.email);
+    if (!student) {
+      res.json({ notifications: [] });
+      return;
+    }
     const notifications = await prisma.notification.findMany({
-      where: { studentId }
+      where: { studentId: student.id }
     });
     res.json({ notifications });
   } catch (error) {
@@ -3937,8 +3970,7 @@ router8.get("/student/:studentId/notifications", async (req, res) => {
 });
 router8.get("/student/:studentId/profile", async (req, res) => {
   try {
-    const studentId = Number(req.params.studentId);
-    const student = await prisma.student.findUnique({ where: { id: studentId } });
+    const student = await resolveStudent(req.params.studentId, req.user?.email);
     if (!student) {
       res.status(404).json({ error: "Student not found" });
       return;
@@ -3950,10 +3982,14 @@ router8.get("/student/:studentId/profile", async (req, res) => {
 });
 router8.put("/student/:studentId/profile", async (req, res) => {
   try {
-    const studentId = Number(req.params.studentId);
+    const student = await resolveStudent(req.params.studentId, req.user?.email || req.body?.email);
+    if (!student) {
+      res.status(404).json({ error: "Student not found" });
+      return;
+    }
     const { name, phone, branch, cgpa, skills, resumeUrl, profileImage, bio } = req.body;
     const updated = await prisma.student.update({
-      where: { id: studentId },
+      where: { id: student.id },
       data: {
         ...name ? { name } : {},
         ...phone ? { phone } : {},

@@ -748,7 +748,11 @@ const localDb = {
 
     async update({ where, data }: any) {
       const db = loadLocalData();
-      const idx = db.students.findIndex((s) => s.id === where.id || s.externalId === where.externalId);
+      const idx = db.students.findIndex((s) =>
+        (where.id !== undefined && (s.id === where.id || String(s.id) === String(where.id) || String(s.externalId) === String(where.id))) ||
+        (where.externalId !== undefined && String(s.externalId) === String(where.externalId)) ||
+        (where.email !== undefined && s.email && s.email.toLowerCase() === String(where.email).toLowerCase())
+      );
       if (idx >= 0) {
         db.students[idx] = { ...db.students[idx], ...data, updatedAt: new Date().toISOString() };
         saveLocalData(db);

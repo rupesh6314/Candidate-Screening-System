@@ -125,8 +125,9 @@ router.post('/change-password', async (req, res, next) => {
     const student = await prisma.student.findFirst({
       where: {
         OR: [
-          ...(studentId ? [{ id: studentId }] : []),
+          ...(studentId ? [{ id: studentId }, { externalId: String(studentId) }] : []),
           ...(email ? [{ email: email.toLowerCase().trim() }] : []),
+          ...((req as any).user?.email ? [{ email: (req as any).user.email.toLowerCase().trim() }] : []),
         ],
       },
     });
