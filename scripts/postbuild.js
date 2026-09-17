@@ -43,11 +43,6 @@ try {
   );
 }
 
-// Write TypeScript wrapper in api/
-fs.writeFileSync(
-  path.resolve(apiDir, 'index.ts'),
-  `import { app } from '../apps/api/src/app.js';\nexport default app;\n`
-);
 
 // 2. Sync web static outputs to root dist and apps/web/dist
 if (fs.existsSync(rootDist) && fs.existsSync(webDist)) {
