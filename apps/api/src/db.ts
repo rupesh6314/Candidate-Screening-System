@@ -623,18 +623,34 @@ const localDb = {
         }
       }
 
-      // OrderBy
-      if (args?.orderBy && Array.isArray(args.orderBy)) {
-        for (const order of [...args.orderBy].reverse()) {
-          const [key, dir] = Object.entries(order)[0] as [string, string];
-          list.sort((a, b) => {
-            const valA = a[key] ?? '';
-            const valB = b[key] ?? '';
-            if (valA < valB) return dir === 'asc' ? -1 : 1;
-            if (valA > valB) return dir === 'asc' ? 1 : -1;
-            return 0;
-          });
-        }
+      // OrderBy with numeric & alphabetical tie-breaking
+      if (args?.orderBy) {
+        const orderList = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
+        list.sort((a, b) => {
+          for (const order of orderList) {
+            const [key, dir] = Object.entries(order)[0] as [string, string];
+            const valA = a[key];
+            const valB = b[key];
+            const isNumeric = (typeof valA === 'number' || (!isNaN(Number(valA)) && valA !== null && valA !== '')) &&
+                              (typeof valB === 'number' || (!isNaN(Number(valB)) && valB !== null && valB !== ''));
+
+            if (isNumeric) {
+              const numA = Number(valA);
+              const numB = Number(valB);
+              if (numA !== numB) {
+                return dir === 'asc' ? numA - numB : numB - numA;
+              }
+            } else {
+              const strA = String(valA || '').toLowerCase();
+              const strB = String(valB || '').toLowerCase();
+              const cmp = strA.localeCompare(strB);
+              if (cmp !== 0) {
+                return dir === 'asc' ? cmp : -cmp;
+              }
+            }
+          }
+          return 0;
+        });
       }
 
       // Pagination

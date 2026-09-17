@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth } from '../middleware/auth.js';
 import { prisma } from '../db.js';
 import { getActiveRuleset } from '../services/rules.service.js';
+import { enrichStudent } from './students.routes.js';
 
 const router = Router();
 
@@ -122,10 +123,9 @@ router.get('/summary', requireAuth, async (req, res, next) => {
     let maxCgpa = 0;
     let minCgpa = total > 0 ? 10 : 0;
 
-    for (const student of filteredStudents) {
-      const effCategory = student.isOverridden && student.overrideCategory
-        ? student.overrideCategory
-        : student.category;
+    for (const rawStudent of filteredStudents) {
+      const student = enrichStudent(rawStudent);
+      const effCategory = student.category;
 
       if (effCategory === 'STRONG') strong++;
       else if (effCategory === 'AVERAGE') average++;

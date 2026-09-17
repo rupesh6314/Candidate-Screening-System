@@ -320,7 +320,7 @@ router.get('/', requireAuth, async (req, res, next) => {
         isReviewed: z.enum(['true', 'false']).optional(),
         sortBy: z
           .enum(['score', 'cgpa', 'name', 'branch', 'createdAt'])
-          .default('score'),
+          .default('cgpa'),
         sortOrder: z.enum(['asc', 'desc']).default('desc'),
         page: z.coerce.number().int().positive().default(1),
         pageSize: z.coerce.number().int().min(1).max(200).default(50),
@@ -396,16 +396,19 @@ router.get('/', requireAuth, async (req, res, next) => {
     }
 
     const orderBy: any[] = [];
-    if (query.sortBy === 'score') {
+    if (query.sortBy === 'cgpa') {
+      orderBy.push({ cgpa: query.sortOrder });
+      orderBy.push({ name: 'asc' });
+    } else if (query.sortBy === 'score') {
       orderBy.push({ score: query.sortOrder });
       orderBy.push({ cgpa: 'desc' });
       orderBy.push({ name: 'asc' });
-    } else if (query.sortBy === 'cgpa') {
-      orderBy.push({ cgpa: query.sortOrder });
-      orderBy.push({ score: 'desc' });
-      orderBy.push({ name: 'asc' });
+    } else if (query.sortBy === 'name') {
+      orderBy.push({ name: query.sortOrder });
+      orderBy.push({ cgpa: 'desc' });
     } else {
       orderBy.push({ [query.sortBy]: query.sortOrder });
+      orderBy.push({ name: 'asc' });
     }
 
     const [items, total] = await prisma.$transaction([

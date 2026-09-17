@@ -69,7 +69,7 @@ export default function App() {
   const [isOverriddenOnly, setIsOverriddenOnly] = useState<boolean>(false);
 
   // Sorting & Pagination State
-  const [sortBy, setSortBy] = useState<'score' | 'cgpa' | 'name' | 'branch'>('score');
+  const [sortBy, setSortBy] = useState<'score' | 'cgpa' | 'name' | 'branch'>('cgpa');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -285,8 +285,9 @@ export default function App() {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(column);
-      setSortOrder('desc');
+      setSortOrder(column === 'name' ? 'asc' : 'desc');
     }
+    setPage(1);
   };
 
   // Manual Override Actions
@@ -692,6 +693,8 @@ export default function App() {
           setHasInternship(false);
           setHasCertification(false);
           setIsOverriddenOnly(false);
+          setSortBy('cgpa');
+          setSortOrder('desc');
           setPage(1);
           fetchData();
         }}

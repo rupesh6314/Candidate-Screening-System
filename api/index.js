@@ -614,17 +614,31 @@ var localDb = {
           );
         }
       }
-      if (args?.orderBy && Array.isArray(args.orderBy)) {
-        for (const order of [...args.orderBy].reverse()) {
-          const [key, dir] = Object.entries(order)[0];
-          list.sort((a, b) => {
-            const valA = a[key] ?? "";
-            const valB = b[key] ?? "";
-            if (valA < valB) return dir === "asc" ? -1 : 1;
-            if (valA > valB) return dir === "asc" ? 1 : -1;
-            return 0;
-          });
-        }
+      if (args?.orderBy) {
+        const orderList = Array.isArray(args.orderBy) ? args.orderBy : [args.orderBy];
+        list.sort((a, b) => {
+          for (const order of orderList) {
+            const [key, dir] = Object.entries(order)[0];
+            const valA = a[key];
+            const valB = b[key];
+            const isNumeric = (typeof valA === "number" || !isNaN(Number(valA)) && valA !== null && valA !== "") && (typeof valB === "number" || !isNaN(Number(valB)) && valB !== null && valB !== "");
+            if (isNumeric) {
+              const numA = Number(valA);
+              const numB = Number(valB);
+              if (numA !== numB) {
+                return dir === "asc" ? numA - numB : numB - numA;
+              }
+            } else {
+              const strA = String(valA || "").toLowerCase();
+              const strB = String(valB || "").toLowerCase();
+              const cmp = strA.localeCompare(strB);
+              if (cmp !== 0) {
+                return dir === "asc" ? cmp : -cmp;
+              }
+            }
+          }
+          return 0;
+        });
       }
       if (args?.skip !== void 0 && args?.take !== void 0) {
         list = list.slice(args.skip, args.skip + args.take);
@@ -2313,7 +2327,7 @@ router2.get("/", requireAuth, async (req, res, next) => {
       hasCertification: z3.enum(["true", "false"]).optional(),
       isOverridden: z3.enum(["true", "false"]).optional(),
       isReviewed: z3.enum(["true", "false"]).optional(),
-      sortBy: z3.enum(["score", "cgpa", "name", "branch", "createdAt"]).default("score"),
+      sortBy: z3.enum(["score", "cgpa", "name", "branch", "createdAt"]).default("cgpa"),
       sortOrder: z3.enum(["asc", "desc"]).default("desc"),
       page: z3.coerce.number().int().positive().default(1),
       pageSize: z3.coerce.number().int().min(1).max(200).default(50)
@@ -2371,16 +2385,19 @@ router2.get("/", requireAuth, async (req, res, next) => {
       where.isReviewed = query.isReviewed === "true";
     }
     const orderBy = [];
-    if (query.sortBy === "score") {
+    if (query.sortBy === "cgpa") {
+      orderBy.push({ cgpa: query.sortOrder });
+      orderBy.push({ name: "asc" });
+    } else if (query.sortBy === "score") {
       orderBy.push({ score: query.sortOrder });
       orderBy.push({ cgpa: "desc" });
       orderBy.push({ name: "asc" });
-    } else if (query.sortBy === "cgpa") {
-      orderBy.push({ cgpa: query.sortOrder });
-      orderBy.push({ score: "desc" });
-      orderBy.push({ name: "asc" });
+    } else if (query.sortBy === "name") {
+      orderBy.push({ name: query.sortOrder });
+      orderBy.push({ cgpa: "desc" });
     } else {
       orderBy.push({ [query.sortBy]: query.sortOrder });
+      orderBy.push({ name: "asc" });
     }
     const [items, total] = await prisma.$transaction([
       prisma.student.findMany({
@@ -2907,8 +2924,9 @@ router3.get("/summary", requireAuth, async (req, res, next) => {
     let cgpaSum = 0;
     let maxCgpa = 0;
     let minCgpa = total > 0 ? 10 : 0;
-    for (const student of filteredStudents) {
-      const effCategory = student.isOverridden && student.overrideCategory ? student.overrideCategory : student.category;
+    for (const rawStudent of filteredStudents) {
+      const student = enrichStudent(rawStudent);
+      const effCategory = student.category;
       if (effCategory === "STRONG") strong++;
       else if (effCategory === "AVERAGE") average++;
       else needsImprovement++;
