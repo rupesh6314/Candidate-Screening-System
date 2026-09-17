@@ -40,6 +40,15 @@ export const AuditLogModal: React.FC<AuditLogModalProps> = ({ onClose }) => {
 
   const filteredLogs = logs.filter((l) => {
     if (filterAction === 'ALL') return true;
+    if (filterAction === 'OVERRIDE') {
+      return l.action === 'MANUAL_OVERRIDE' || l.action === 'CLEAR_OVERRIDE' || l.action === 'STUDENT_CATEGORY_OVERRIDE';
+    }
+    if (filterAction === 'RULES') {
+      return l.action.includes('RULE') || l.action === 'RULESET_UPDATE';
+    }
+    if (filterAction === 'CSV') {
+      return l.action.includes('CSV') || l.action === 'CSV_IMPORT';
+    }
     return l.action === filterAction;
   });
 
@@ -92,22 +101,22 @@ export const AuditLogModal: React.FC<AuditLogModalProps> = ({ onClose }) => {
               </button>
               <button
                 type="button"
-                className={`modal-tab-btn ${filterAction === 'STUDENT_CATEGORY_OVERRIDE' ? 'active' : ''}`}
-                onClick={() => setFilterAction('STUDENT_CATEGORY_OVERRIDE')}
+                className={`modal-tab-btn ${filterAction === 'OVERRIDE' ? 'active' : ''}`}
+                onClick={() => setFilterAction('OVERRIDE')}
               >
                 Category Overrides
               </button>
               <button
                 type="button"
-                className={`modal-tab-btn ${filterAction === 'RULESET_UPDATE' ? 'active' : ''}`}
-                onClick={() => setFilterAction('RULESET_UPDATE')}
+                className={`modal-tab-btn ${filterAction === 'RULES' ? 'active' : ''}`}
+                onClick={() => setFilterAction('RULES')}
               >
                 Scoring Rule Changes
               </button>
               <button
                 type="button"
-                className={`modal-tab-btn ${filterAction === 'CSV_IMPORT' ? 'active' : ''}`}
-                onClick={() => setFilterAction('CSV_IMPORT')}
+                className={`modal-tab-btn ${filterAction === 'CSV' ? 'active' : ''}`}
+                onClick={() => setFilterAction('CSV')}
               >
                 CSV Ingestions
               </button>

@@ -254,27 +254,62 @@ export const JobMatcherModal: React.FC<JobMatcherModalProps> = ({
           {/* Ranked Shortlist Results Table */}
           {hasCalculated && (
             <div className="job-results-section">
-              <div className="job-results-header">
+              <div
+                className="job-results-header"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                  padding: '14px 0',
+                  borderBottom: '1px solid var(--slate-200)',
+                  marginBottom: '16px',
+                }}
+              >
                 <div>
-                  <h3 className="job-results-title">
-                    Ranked Shortlist for <strong>{job.companyName}</strong> ({matches.length} Candidates Evaluated)
+                  <h3 className="job-results-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
+                    Ranked Shortlist for <strong>{job.companyName}</strong> ({matches.length} Candidates Qualified)
                   </h3>
-                  <span className="job-results-sub">
-                    Sorted by Fit Match Percentage descending • Minimum CGPA: {job.minCgpa}
+                  <span className="job-results-sub" style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                    Filtered strictly by Minimum CGPA Cutoff ≥ {job.minCgpa} • Sorted by CGPA & Fit Match %
                   </span>
                 </div>
                 <button
                   type="button"
-                  className="btn btn-success"
+                  className="btn btn-export-highlight"
                   onClick={handleExportShortlist}
+                  style={{
+                    background: 'linear-gradient(135deg, #059669, #10b981)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 700,
+                    padding: '10px 22px',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    fontSize: '13.5px',
+                    letterSpacing: '0.01em',
+                    transition: 'all 0.15s ease',
+                  }}
                 >
-                  <Download size={15} />
+                  <Download size={16} />
                   <span>Export Company Shortlist CSV</span>
                 </button>
               </div>
 
-              <div className="table-responsive" style={{ maxHeight: '360px' }}>
-                <table className="student-table">
+              {matches.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '36px', background: '#f8fafc', borderRadius: '8px', color: '#64748b' }}>
+                  <p style={{ margin: 0, fontSize: '14px' }}>
+                    No candidates found with CGPA ≥ {job.minCgpa}. Try lowering the CGPA cutoff to evaluate more candidates.
+                  </p>
+                </div>
+              ) : (
+                <div className="table-responsive" style={{ maxHeight: '360px' }}>
+                  <table className="student-table">
                   <thead>
                     <tr>
                       <th style={{ width: '60px' }}>Rank</th>
@@ -349,9 +384,10 @@ export const JobMatcherModal: React.FC<JobMatcherModalProps> = ({
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
+      </div>
 
         <div className="modal-footer">
           <button type="button" className="btn btn-outline" onClick={onClose}>

@@ -2314,51 +2314,210 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 14px;
+  padding: 14px 18px;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
-  border-radius: var(--radius-md);
-  margin-bottom: 16px;
-  font-size: 12.5px;
-  color: #1e40af;
-}
-
-.file-dropzone {
-  border: 2px dashed var(--slate-300);
   border-radius: var(--radius-lg);
-  padding: 32px 20px;
-  text-align: center;
-  background: var(--slate-50);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: #1e40af;
+  line-height: 1.5;
 }
 
+.import-notice-box .notice-text {
+  flex: 1;
+}
+
+.upload-dropzone,
+.file-dropzone {
+  border: 2px dashed #93c5fd;
+  border-radius: var(--radius-xl);
+  padding: 36px 24px;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-dropzone:hover,
 .file-dropzone:hover {
-  background: var(--primary-50);
-  border-color: var(--primary);
+  background: #eff6ff;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
 }
 
 .dropzone-icon {
-  width: 44px;
-  height: 44px;
-  color: var(--primary);
-  margin-bottom: 8px;
+  color: #3b82f6;
+  margin-bottom: 12px;
 }
 
-.file-selected-badge {
+.dropzone-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.dropzone-subtext {
+  font-size: 12px;
+  color: #64748b;
+  max-width: 500px;
+}
+
+/* Ingest Report Section */
+.ingest-report-section {
+  margin-top: 20px;
+  border-top: 1px solid var(--slate-200);
+  padding-top: 18px;
+}
+
+.report-summary-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.report-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: #ffffff;
-  border: 1px solid var(--primary-300);
   border-radius: var(--radius-full);
   font-size: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.report-badge.total { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+.report-badge.clean { background: #ecfdf5; color: #047857; border-color: #6ee7b7; }
+.report-badge.warning { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.report-badge.rejected { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+
+.report-table-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 16px 0 10px 0;
+}
+
+.report-table-wrap {
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.report-table th {
+  background: #f8fafc;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid var(--slate-200);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.report-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--slate-100);
+  vertical-align: top;
+}
+
+.report-row.accepted { background: #ffffff; }
+.report-row.warning { background: #fffdf5; }
+.report-row.rejected { background: #fff5f5; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.status-pill.accepted { background: #ecfdf5; color: #047857; }
+.status-pill.warning { background: #fffbeb; color: #b45309; }
+.status-pill.rejected { background: #fff1f2; color: #be123c; }
+
+.issue-list {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 11.5px;
+  color: #b45309;
+}
+
+.issue-diff {
+  color: #64748b;
+  font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Modal Tab Bar (Audit Log & Data Quality Tabs)
+   -------------------------------------------------------------------------- */
+.audit-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.modal-tab-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  background: #f1f5f9;
+  border-radius: var(--radius-lg);
+  border: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.modal-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--primary-800);
-  margin-top: 8px;
+  color: #475569;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.modal-tab-btn:hover {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.modal-tab-btn.active {
+  background: #ffffff;
+  color: #1e293b;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Toast Notifications */

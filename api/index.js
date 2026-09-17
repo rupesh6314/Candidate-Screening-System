@@ -3215,10 +3215,15 @@ function matchCandidateToJob(candidate, job) {
   };
 }
 function rankCandidatesForJob(candidates, job) {
-  return candidates.map((c) => matchCandidateToJob(c, job)).sort((a, b) => {
+  const minCgpa = Number(job.minCgpa) || 0;
+  const eligibleCandidates = minCgpa > 0 ? candidates.filter((c) => Number(c.cgpa) >= minCgpa) : candidates;
+  return eligibleCandidates.map((c) => matchCandidateToJob(c, job)).sort((a, b) => {
+    const cgpaA = Number(a.candidate.cgpa);
+    const cgpaB = Number(b.candidate.cgpa);
+    if (Math.abs(cgpaB - cgpaA) > 1e-3) return cgpaB - cgpaA;
     if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
     if (b.candidate.score !== a.candidate.score) return b.candidate.score - a.candidate.score;
-    return Number(b.candidate.cgpa) - Number(a.candidate.cgpa);
+    return a.candidate.name.localeCompare(b.candidate.name);
   });
 }
 

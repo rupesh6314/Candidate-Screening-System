@@ -187,17 +187,27 @@ export function matchCandidateToJob(
 
 /**
  * Evaluates an entire student cohort against a job requirement,
- * returning ranked shortlists.
+ * returning ranked shortlists strictly filtered by the minimum CGPA cutoff.
  */
 export function rankCandidatesForJob(
   candidates: CandidateProfile[],
   job: JobRequirement
 ): CandidateJobMatch[] {
-  return candidates
+  const minCgpa = Number(job.minCgpa) || 0;
+  // Filter candidates whose CGPA is >= minCgpa cutoff
+  const eligibleCandidates = minCgpa > 0
+    ? candidates.filter((c) => Number(c.cgpa) >= minCgpa)
+    : candidates;
+
+  return eligibleCandidates
     .map((c) => matchCandidateToJob(c, job))
     .sort((a, b) => {
+      // Sort primarily by CGPA descending, then matchScore descending, overall score, name
+      const cgpaA = Number(a.candidate.cgpa);
+      const cgpaB = Number(b.candidate.cgpa);
+      if (Math.abs(cgpaB - cgpaA) > 0.001) return cgpaB - cgpaA;
       if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
       if (b.candidate.score !== a.candidate.score) return b.candidate.score - a.candidate.score;
-      return Number(b.candidate.cgpa) - Number(a.candidate.cgpa);
+      return a.candidate.name.localeCompare(b.candidate.name);
     });
 }
