@@ -11,6 +11,7 @@ interface SendEmailParams {
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { getDbEmailConfig, saveDbEmailConfig } from '../db.js';
 
 export interface SmtpConfig {
   host?: string;
@@ -27,6 +28,14 @@ let runtimeConfig: SmtpConfig | null = null;
 export function loadEmailConfig(): SmtpConfig | null {
   if (runtimeConfig) return runtimeConfig;
   try {
+    const dbConfig = getDbEmailConfig();
+    if (dbConfig && dbConfig.user && dbConfig.pass) {
+      runtimeConfig = dbConfig;
+      return runtimeConfig;
+    }
+  } catch (_) {}
+
+  try {
     if (fs.existsSync(EMAIL_CONFIG_FILE)) {
       runtimeConfig = JSON.parse(fs.readFileSync(EMAIL_CONFIG_FILE, 'utf8'));
       return runtimeConfig;
@@ -38,6 +47,9 @@ export function loadEmailConfig(): SmtpConfig | null {
 export function saveEmailConfig(config: SmtpConfig): void {
   runtimeConfig = config;
   try {
+    saveDbEmailConfig(config);
+  } catch (_) {}
+  try {
     fs.writeFileSync(EMAIL_CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
   } catch (_) {}
 }
@@ -45,31 +57,72 @@ export function saveEmailConfig(config: SmtpConfig): void {
 export function getTransporter(): Transporter | null {
   const custom = loadEmailConfig();
   const smtpHost = custom?.host || process.env.SMTP_HOST || process.env.SMTP_SERVER || '';
-  const smtpPort = custom?.port || parseInt(process.env.SMTP_PORT || '587', 10);
+  const smtpPort = custom?.port || parseInt(process.env.SMTP_PORT || '465', 10);
   const smtpUser = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || '';
   const rawPass = custom?.pass || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || '';
   const smtpPass = rawPass ? rawPass.replace(/\s+/g, '') : '';
 
-  if (smtpHost && smtpUser && smtpPass) {
-    return nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass },
-      connectionTimeout: 7000,
-      greetingTimeout: 4000,
-      socketTimeout: 7000,
-    });
-  } else if (smtpUser && smtpPass) {
+  if (!smtpUser || !smtpPass) return null;
+
+  const isGmail =
+    smtpHost.toLowerCase().includes('gmail') ||
+    smtpUser.toLowerCase().endsWith('@gmail.com') ||
+    (!smtpHost && smtpUser.includes('@'));
+
+  if (isGmail) {
     return nodemailer.createTransport({
       service: 'gmail',
-      auth: { user: smtpUser, pass: smtpPass },
-      connectionTimeout: 7000,
-      greetingTimeout: 4000,
-      socketTimeout: 7000,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
     });
   }
-  return null;
+
+  const isOutlook =
+    smtpHost.toLowerCase().includes('office365') ||
+    smtpHost.toLowerCase().includes('outlook') ||
+    smtpUser.toLowerCase().endsWith('@outlook.com') ||
+    smtpUser.toLowerCase().endsWith('@hotmail.com');
+
+  if (isOutlook) {
+    return nodemailer.createTransport({
+      service: 'outlook',
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+      tls: {
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3',
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
+    });
+  }
+
+  return nodemailer.createTransport({
+    host: smtpHost || 'smtp.gmail.com',
+    port: smtpPort || 465,
+    secure: smtpPort === 465,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000,
+  });
 }
 
 export function getEmailConfigStatus(): { configured: boolean; user?: string; host?: string; mode: 'REAL_SMTP' | 'IN_APP_SIMULATOR' } {

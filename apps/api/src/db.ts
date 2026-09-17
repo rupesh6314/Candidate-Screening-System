@@ -408,6 +408,7 @@ interface LocalDatabase {
   companyDrives: Array<any>;
   driveApplications: Array<any>;
   notifications: Array<any>;
+  emailConfig?: any;
 }
 
 let memoryDb: LocalDatabase | null = null;
@@ -518,6 +519,17 @@ function saveLocalData(db: LocalDatabase) {
   } catch (_) {
     // Read-only filesystem in serverless environments
   }
+}
+
+export function getDbEmailConfig(): any {
+  const db = loadLocalData();
+  return db.emailConfig || null;
+}
+
+export function saveDbEmailConfig(config: any): void {
+  const db = loadLocalData();
+  db.emailConfig = config;
+  saveLocalData(db);
 }
 
 // Local Database Adapter providing Prisma API

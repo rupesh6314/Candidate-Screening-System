@@ -250,6 +250,92 @@ export default function App() {
     (hasCertification ? 1 : 0) +
     (isOverriddenOnly ? 1 : 0);
 
+  // Real-time Reactive Dashboard Metrics computed instantaneously from students
+  const liveSummary = useMemo<DashboardSummary | null>(() => {
+    if (!students || students.length === 0) {
+      return summary || null;
+    }
+
+    const total = students.length;
+    let strong = 0;
+    let average = 0;
+    let needsImprovement = 0;
+    let withInternship = 0;
+    let withCertification = 0;
+    let overriddenCount = 0;
+    let cgpaSum = 0;
+    let maxCgpa = 0;
+    let minCgpa = total > 0 ? (Number(students[0]?.cgpa) || 10) : 0;
+
+    const cgpaHistogram: Record<string, number> = {
+      '<6.0': 0,
+      '6.0–6.9': 0,
+      '7.0–7.9': 0,
+      '8.0–8.9': 0,
+      '9.0–10.0': 0,
+    };
+
+    for (const s of students) {
+      const cat = (s.isOverridden && s.overrideCategory) ? s.overrideCategory : s.category;
+      if (cat === 'STRONG') strong++;
+      else if (cat === 'AVERAGE') average++;
+      else needsImprovement++;
+
+      if (s.isOverridden) overriddenCount++;
+
+      const numCgpa = Number(s.cgpa) || 0;
+      cgpaSum += numCgpa;
+      if (numCgpa > maxCgpa) maxCgpa = numCgpa;
+      if (numCgpa < minCgpa) minCgpa = numCgpa;
+
+      if (numCgpa < 6.0) cgpaHistogram['<6.0']++;
+      else if (numCgpa < 7.0) cgpaHistogram['6.0–6.9']++;
+      else if (numCgpa < 8.0) cgpaHistogram['7.0–7.9']++;
+      else if (numCgpa < 9.0) cgpaHistogram['8.0–8.9']++;
+      else cgpaHistogram['9.0–10.0']++;
+
+      if (s.internships && s.internships.length > 0) withInternship++;
+      if (s.certifications && s.certifications.length > 0) withCertification++;
+    }
+
+    const strongPct = total > 0 ? Math.round((strong / total) * 100) : 0;
+    const avgPct = total > 0 ? Math.round((average / total) * 100) : 0;
+    const needsPct = total > 0 ? Math.round((needsImprovement / total) * 100) : 0;
+    const internshipRate = total > 0 ? Math.round((withInternship / total) * 100) : 0;
+    const certificationRate = total > 0 ? Math.round((withCertification / total) * 100) : 0;
+    const averageCgpa = total > 0 ? Number((cgpaSum / total).toFixed(2)) : 0;
+
+    return {
+      totalCohortCount: summary?.totalCohortCount ? Math.max(summary.totalCohortCount, total) : total,
+      total,
+      isFiltered: activeFilterCount > 0,
+      strong,
+      strongPct,
+      average,
+      avgPct,
+      needsImprovement,
+      needsPct,
+      averageCgpa,
+      maxCgpa: total > 0 ? maxCgpa : 0,
+      minCgpa: total > 0 ? minCgpa : 0,
+      withInternship,
+      internshipRate,
+      withCertification,
+      certificationRate,
+      overriddenCount,
+      cgpaHistogram,
+      topSkills: summary?.topSkills || [],
+      branches: summary?.branches || [],
+      rules: summary?.rules || {
+        id: 'ruleset-default',
+        version: 1,
+        strongThreshold: 8,
+        averageThreshold: 5,
+        maxScore: 10,
+      },
+    };
+  }, [students, summary, activeFilterCount]);
+
   const handleClearFilters = () => {
     setSearch('');
     setMinCgpa('');
@@ -515,7 +601,7 @@ export default function App() {
       <div className="main-container">
         {/* Dynamic Live-Filtered Dashboard KPI Cards & Visual Charts */}
         <DashboardMetrics
-          summary={summary}
+          summary={liveSummary}
           onClearFilters={handleClearFilters}
           isFiltered={activeFilterCount > 0}
         />
@@ -693,8 +779,23 @@ export default function App() {
       <AddStudentModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onStudentAdded={(name) => {
-          showToast(`Candidate ${name} added & evaluated successfully!`);
+        onStudentAdded={(newStudentOrName: any) => {
+          const studentObj = typeof newStudentOrName === 'object' && newStudentOrName?.id ? newStudentOrName : null;
+          const candidateName = studentObj ? studentObj.name : String(newStudentOrName || 'Candidate');
+          showToast(`Candidate ${candidateName} added & evaluated successfully!`);
+
+          if (studentObj) {
+            setStudents((prev) => {
+              const filtered = prev.filter((s) => s.id !== studentObj.id);
+              const updated = [studentObj, ...filtered].sort((a, b) => {
+                const diff = (Number(b.cgpa) || 0) - (Number(a.cgpa) || 0);
+                if (diff !== 0) return diff;
+                return (a.name || '').localeCompare(b.name || '');
+              });
+              return updated;
+            });
+          }
+
           setSearch('');
           setCategory('');
           setBranch('');

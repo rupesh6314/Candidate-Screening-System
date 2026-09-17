@@ -63,8 +63,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
         certifications: formData.certifications ? formData.certifications.split(';').map((s) => s.trim()).filter(Boolean) : [],
       };
 
-      await api.post('/api/students', payload);
-      onStudentAdded(formData.name);
+      const res = await api.post('/api/students', payload);
+      onStudentAdded(res.data || formData.name);
       onClose();
       setFormData({
         externalId: '',

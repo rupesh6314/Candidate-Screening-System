@@ -96,9 +96,9 @@ export const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
             <span className="kpi-subtext">Students in view</span>
           </div>
           <div className="kpi-footer">
-            <span>Avg CGPA: <strong>{averageCgpa.toFixed(2)}</strong></span>
+            <span>Avg CGPA: <strong>{(Number(averageCgpa) || 0).toFixed(2)}</strong></span>
             <span className="kpi-divider">•</span>
-            <span>Range: {minCgpa.toFixed(1)}–{maxCgpa.toFixed(1)}</span>
+            <span>Range: {(Number(minCgpa) || 0).toFixed(1)}–{(Number(maxCgpa) || 0).toFixed(1)}</span>
           </div>
         </div>
 

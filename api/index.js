@@ -516,6 +516,15 @@ function saveLocalData(db) {
   } catch (_) {
   }
 }
+function getDbEmailConfig() {
+  const db = loadLocalData();
+  return db.emailConfig || null;
+}
+function saveDbEmailConfig(config) {
+  const db = loadLocalData();
+  db.emailConfig = config;
+  saveLocalData(db);
+}
 var localDb = {
   user: {
     async findUnique({ where }) {
@@ -1888,6 +1897,14 @@ var runtimeConfig = null;
 function loadEmailConfig() {
   if (runtimeConfig) return runtimeConfig;
   try {
+    const dbConfig = getDbEmailConfig();
+    if (dbConfig && dbConfig.user && dbConfig.pass) {
+      runtimeConfig = dbConfig;
+      return runtimeConfig;
+    }
+  } catch (_) {
+  }
+  try {
     if (fs3.existsSync(EMAIL_CONFIG_FILE)) {
       runtimeConfig = JSON.parse(fs3.readFileSync(EMAIL_CONFIG_FILE, "utf8"));
       return runtimeConfig;
@@ -1899,6 +1916,10 @@ function loadEmailConfig() {
 function saveEmailConfig(config) {
   runtimeConfig = config;
   try {
+    saveDbEmailConfig(config);
+  } catch (_) {
+  }
+  try {
     fs3.writeFileSync(EMAIL_CONFIG_FILE, JSON.stringify(config, null, 2), "utf8");
   } catch (_) {
   }
@@ -1906,30 +1927,59 @@ function saveEmailConfig(config) {
 function getTransporter() {
   const custom = loadEmailConfig();
   const smtpHost = custom?.host || process.env.SMTP_HOST || process.env.SMTP_SERVER || "";
-  const smtpPort = custom?.port || parseInt(process.env.SMTP_PORT || "587", 10);
+  const smtpPort = custom?.port || parseInt(process.env.SMTP_PORT || "465", 10);
   const smtpUser = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || "";
   const rawPass = custom?.pass || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || "";
   const smtpPass = rawPass ? rawPass.replace(/\s+/g, "") : "";
-  if (smtpHost && smtpUser && smtpPass) {
-    return nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass },
-      connectionTimeout: 7e3,
-      greetingTimeout: 4e3,
-      socketTimeout: 7e3
-    });
-  } else if (smtpUser && smtpPass) {
+  if (!smtpUser || !smtpPass) return null;
+  const isGmail = smtpHost.toLowerCase().includes("gmail") || smtpUser.toLowerCase().endsWith("@gmail.com") || !smtpHost && smtpUser.includes("@");
+  if (isGmail) {
     return nodemailer.createTransport({
       service: "gmail",
-      auth: { user: smtpUser, pass: smtpPass },
-      connectionTimeout: 7e3,
-      greetingTimeout: 4e3,
-      socketTimeout: 7e3
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      },
+      tls: {
+        rejectUnauthorized: false
+      },
+      connectionTimeout: 1e4,
+      greetingTimeout: 5e3,
+      socketTimeout: 1e4
     });
   }
-  return null;
+  const isOutlook = smtpHost.toLowerCase().includes("office365") || smtpHost.toLowerCase().includes("outlook") || smtpUser.toLowerCase().endsWith("@outlook.com") || smtpUser.toLowerCase().endsWith("@hotmail.com");
+  if (isOutlook) {
+    return nodemailer.createTransport({
+      service: "outlook",
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      },
+      tls: {
+        rejectUnauthorized: false,
+        ciphers: "SSLv3"
+      },
+      connectionTimeout: 1e4,
+      greetingTimeout: 5e3,
+      socketTimeout: 1e4
+    });
+  }
+  return nodemailer.createTransport({
+    host: smtpHost || "smtp.gmail.com",
+    port: smtpPort || 465,
+    secure: smtpPort === 465,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass
+    },
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 1e4,
+    greetingTimeout: 5e3,
+    socketTimeout: 1e4
+  });
 }
 function getEmailConfigStatus() {
   const custom = loadEmailConfig();
