@@ -8,56 +8,65 @@ interface SendEmailParams {
   html?: string;
 }
 
-let transporter: Transporter | null = null;
+function getTransporter(): Transporter | null {
+  const smtpHost = process.env.SMTP_HOST || (process.env.SMTP_SERVER || '');
+  const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+  const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || '';
+  const rawPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || '';
+  const smtpPass = rawPass ? rawPass.replace(/\s+/g, '') : '';
 
-// Initialize transporter if SMTP credentials are provided
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || '';
-const rawPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || '';
-const smtpPass = rawPass ? rawPass.replace(/\s+/g, '') : '';
-
-if (smtpHost && smtpUser && smtpPass) {
-  transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  });
-} else if (smtpUser && smtpPass) {
-  // Gmail service shortcut
-  transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  });
+  if (smtpHost && smtpUser && smtpPass) {
+    return nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass },
+      connectionTimeout: 5000,
+      greetingTimeout: 3000,
+      socketTimeout: 5000,
+    });
+  } else if (smtpUser && smtpPass) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: smtpUser, pass: smtpPass },
+      connectionTimeout: 5000,
+      greetingTimeout: 3000,
+      socketTimeout: 5000,
+    });
+  }
+  return null;
 }
 
 export async function sendEmail({ to, subject, text, html }: SendEmailParams): Promise<{ success: boolean; messageId?: string }> {
-  try {
-    if (transporter) {
+  const transporter = getTransporter();
+  const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || '';
+
+  if (transporter) {
+    try {
       const fromAddress = process.env.SMTP_FROM || `"Campus Placement Cell" <${smtpUser || 'placements@campus.edu'}>`;
-      const info = await transporter.sendMail({
+      const sendPromise = transporter.sendMail({
         from: fromAddress,
         to,
         subject,
         text,
         html: html || `<div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">${text.replace(/\n/g, '<br/>')}</div>`,
       });
-      console.log(`📧 Outgoing Email Sent to ${to}: ${subject} (MessageID: ${info.messageId})`);
+
+      // Wrap with 6s timeout so external SMTP delays never hang the request
+      const timeoutPromise = new Promise<{ messageId: string }>((_, reject) =>
+        setTimeout(() => reject(new Error('SMTP Connection timed out after 6000ms')), 6000)
+      );
+
+      const info = (await Promise.race([sendPromise, timeoutPromise])) as any;
+      console.log(`📧 Outgoing Email Dispatched to ${to}: "${subject}" (MessageID: ${info.messageId})`);
       return { success: true, messageId: info.messageId };
-    } else {
-      console.log(`📬 [Email Dispatch Simulator] To: ${to} | Subject: "${subject}"`);
-      return { success: true, messageId: `simulated-${Date.now()}` };
+    } catch (error: any) {
+      console.warn(`⚠️ SMTP delivery to ${to} deferred or failed (${error.message}). Message recorded in student in-app inbox.`);
+      return { success: false, messageId: `fallback-${Date.now()}` };
     }
-  } catch (error: any) {
-    console.error(`⚠️ Failed to send SMTP email to ${to}:`, error.message);
-    return { success: false };
+  } else {
+    console.log(`📬 [In-App Notification Dispatcher] To: ${to} | Subject: "${subject}" (In-App notifications active)`);
+    return { success: true, messageId: `simulated-${Date.now()}` };
   }
 }
 

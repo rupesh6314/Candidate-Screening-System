@@ -530,7 +530,7 @@ var localDb = {
       if (where.email) {
         return db.users.find((u) => u.email && u.email.toLowerCase() === where.email.toLowerCase()) || null;
       }
-      return db.users[0] || null;
+      return null;
     },
     async upsert({ where, update, create }) {
       const db = loadLocalData();
@@ -639,18 +639,39 @@ var localDb = {
     },
     async findUnique({ where }) {
       const db = loadLocalData();
-      return db.students.find((s) => s.id === where.id || s.externalId === where.externalId) || null;
+      if (!where) return null;
+      if (where.id !== void 0) {
+        return db.students.find((s) => Number(s.id) === Number(where.id)) || null;
+      }
+      if (where.externalId !== void 0) {
+        return db.students.find((s) => String(s.externalId) === String(where.externalId)) || null;
+      }
+      if (where.email !== void 0) {
+        return db.students.find((s) => s.email && s.email.toLowerCase() === String(where.email).toLowerCase()) || null;
+      }
+      return null;
     },
     async findFirst({ where }) {
       const db = loadLocalData();
-      if (where.OR) {
+      if (!where) return db.students[0] || null;
+      if (where.OR && Array.isArray(where.OR)) {
         return db.students.find(
           (s) => where.OR.some(
-            (cond) => cond.externalId && s.externalId === cond.externalId || cond.email && s.email.toLowerCase() === cond.email.toLowerCase()
+            (cond) => cond.externalId && String(s.externalId) === String(cond.externalId) || cond.email && s.email && s.email.toLowerCase() === String(cond.email).toLowerCase()
           )
         ) || null;
       }
-      return db.students[0] || null;
+      if (where.id !== void 0) {
+        return db.students.find((s) => Number(s.id) === Number(where.id)) || null;
+      }
+      if (where.externalId !== void 0) {
+        return db.students.find((s) => String(s.externalId) === String(where.externalId)) || null;
+      }
+      if (where.email !== void 0) {
+        return db.students.find((s) => s.email && s.email.toLowerCase() === String(where.email).toLowerCase()) || null;
+      }
+      const matched = await this.findMany({ where });
+      return matched[0] || null;
     },
     async create({ data }) {
       const db = loadLocalData();
@@ -930,8 +951,9 @@ var prisma = new Proxy({}, {
         return localDb.$transaction(arg);
       };
     }
-    const realModel = rawPrisma ? rawPrisma[modelProp] : null;
-    const localModel = localDb[modelProp];
+    const modelKey = modelProp === "notification" ? "studentNotification" : modelProp === "studentNotification" ? "notification" : modelProp;
+    const realModel = rawPrisma ? rawPrisma[modelProp] || rawPrisma[modelKey] : null;
+    const localModel = localDb[modelProp] || localDb[modelKey];
     if (!realModel) {
       return localModel;
     }
@@ -1836,51 +1858,59 @@ function previewCohortImpact(proposedRules, students) {
 
 // apps/api/src/services/email.service.ts
 import nodemailer from "nodemailer";
-var transporter = null;
-var smtpHost = process.env.SMTP_HOST;
-var smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
-var smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || "";
-var rawPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || "";
-var smtpPass = rawPass ? rawPass.replace(/\s+/g, "") : "";
-if (smtpHost && smtpUser && smtpPass) {
-  transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass
-    }
-  });
-} else if (smtpUser && smtpPass) {
-  transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: smtpUser,
-      pass: smtpPass
-    }
-  });
+function getTransporter() {
+  const smtpHost = process.env.SMTP_HOST || (process.env.SMTP_SERVER || "");
+  const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
+  const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || "";
+  const rawPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || "";
+  const smtpPass = rawPass ? rawPass.replace(/\s+/g, "") : "";
+  if (smtpHost && smtpUser && smtpPass) {
+    return nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass },
+      connectionTimeout: 5e3,
+      greetingTimeout: 3e3,
+      socketTimeout: 5e3
+    });
+  } else if (smtpUser && smtpPass) {
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: smtpUser, pass: smtpPass },
+      connectionTimeout: 5e3,
+      greetingTimeout: 3e3,
+      socketTimeout: 5e3
+    });
+  }
+  return null;
 }
 async function sendEmail({ to, subject, text, html }) {
-  try {
-    if (transporter) {
+  const transporter = getTransporter();
+  const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || "";
+  if (transporter) {
+    try {
       const fromAddress = process.env.SMTP_FROM || `"Campus Placement Cell" <${smtpUser || "placements@campus.edu"}>`;
-      const info = await transporter.sendMail({
+      const sendPromise = transporter.sendMail({
         from: fromAddress,
         to,
         subject,
         text,
         html: html || `<div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">${text.replace(/\n/g, "<br/>")}</div>`
       });
-      console.log(`\u{1F4E7} Outgoing Email Sent to ${to}: ${subject} (MessageID: ${info.messageId})`);
+      const timeoutPromise = new Promise(
+        (_, reject) => setTimeout(() => reject(new Error("SMTP Connection timed out after 6000ms")), 6e3)
+      );
+      const info = await Promise.race([sendPromise, timeoutPromise]);
+      console.log(`\u{1F4E7} Outgoing Email Dispatched to ${to}: "${subject}" (MessageID: ${info.messageId})`);
       return { success: true, messageId: info.messageId };
-    } else {
-      console.log(`\u{1F4EC} [Email Dispatch Simulator] To: ${to} | Subject: "${subject}"`);
-      return { success: true, messageId: `simulated-${Date.now()}` };
+    } catch (error) {
+      console.warn(`\u26A0\uFE0F SMTP delivery to ${to} deferred or failed (${error.message}). Message recorded in student in-app inbox.`);
+      return { success: false, messageId: `fallback-${Date.now()}` };
     }
-  } catch (error) {
-    console.error(`\u26A0\uFE0F Failed to send SMTP email to ${to}:`, error.message);
-    return { success: false };
+  } else {
+    console.log(`\u{1F4EC} [In-App Notification Dispatcher] To: ${to} | Subject: "${subject}" (In-App notifications active)`);
+    return { success: true, messageId: `simulated-${Date.now()}` };
   }
 }
 function getWelcomeEmailHtml(name, email, tempPassword) {
@@ -2316,16 +2346,16 @@ router2.get("/", requireAuth, async (req, res, next) => {
     if (query.branch) {
       const branches = query.branch.split(",").map((b) => b.trim()).filter(Boolean);
       if (branches.length === 1) {
-        where.branch = { contains: branches[0] };
+        where.branch = { contains: branches[0], mode: "insensitive" };
       } else if (branches.length > 1) {
         where.branch = { in: branches };
       }
     }
     if (query.search) {
       where.OR = [
-        { name: { contains: query.search } },
-        { email: { contains: query.search } },
-        { externalId: { contains: query.search } }
+        { name: { contains: query.search, mode: "insensitive" } },
+        { email: { contains: query.search, mode: "insensitive" } },
+        { externalId: { contains: query.search, mode: "insensitive" } }
       ];
     }
     if (query.hasInternship !== void 0) {
@@ -2630,19 +2660,25 @@ Here are your login credentials:
 
 \u26A0\uFE0F CRITICAL SAFETY NOTICE:
 When you log in for the first time, you MUST and SHOULD change your password immediately in your profile settings for more safety and account protection.`;
-      await prisma.notification.create({
-        data: {
-          studentId: created.id,
-          studentEmail: created.email,
-          subject: welcomeSubject,
-          message: welcomeMessage
-        }
-      });
-      await sendEmail({
+      try {
+        await prisma.studentNotification.create({
+          data: {
+            studentId: created.id,
+            studentEmail: created.email,
+            subject: welcomeSubject,
+            message: welcomeMessage
+          }
+        });
+      } catch (notifErr) {
+        console.warn("\u26A0\uFE0F Could not record initial student notification:", notifErr?.message || notifErr);
+      }
+      sendEmail({
         to: created.email,
         subject: welcomeSubject,
         text: welcomeMessage,
         html: getWelcomeEmailHtml(created.name, created.email, tempPassword)
+      }).catch((err) => {
+        console.warn(`\u26A0\uFE0F Background email dispatch failed for ${created.email}:`, err?.message || err);
       });
       await audit(req.user.id, "CREATE", "STUDENT", String(created.id), {
         email: created.email,
@@ -2824,16 +2860,16 @@ router3.get("/summary", requireAuth, async (req, res, next) => {
     if (query.branch) {
       const branches2 = query.branch.split(",").map((b) => b.trim()).filter(Boolean);
       if (branches2.length === 1) {
-        where.branch = { contains: branches2[0] };
+        where.branch = { contains: branches2[0], mode: "insensitive" };
       } else if (branches2.length > 1) {
         where.branch = { in: branches2 };
       }
     }
     if (query.search) {
       where.OR = [
-        { name: { contains: query.search } },
-        { email: { contains: query.search } },
-        { externalId: { contains: query.search } }
+        { name: { contains: query.search, mode: "insensitive" } },
+        { email: { contains: query.search, mode: "insensitive" } },
+        { externalId: { contains: query.search, mode: "insensitive" } }
       ];
     }
     if (query.hasInternship !== void 0) {

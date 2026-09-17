@@ -359,7 +359,7 @@ router.get('/', requireAuth, async (req, res, next) => {
     if (query.branch) {
       const branches = query.branch.split(',').map((b) => b.trim()).filter(Boolean);
       if (branches.length === 1) {
-        where.branch = { contains: branches[0] };
+        where.branch = { contains: branches[0], mode: 'insensitive' };
       } else if (branches.length > 1) {
         where.branch = { in: branches };
       }
@@ -367,9 +367,9 @@ router.get('/', requireAuth, async (req, res, next) => {
 
     if (query.search) {
       where.OR = [
-        { name: { contains: query.search } },
-        { email: { contains: query.search } },
-        { externalId: { contains: query.search } },
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { email: { contains: query.search, mode: 'insensitive' } },
+        { externalId: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 
@@ -732,21 +732,27 @@ Here are your login credentials:
 ⚠️ CRITICAL SAFETY NOTICE:
 When you log in for the first time, you MUST and SHOULD change your password immediately in your profile settings for more safety and account protection.`;
 
-      await prisma.notification.create({
-        data: {
-          studentId: created.id,
-          studentEmail: created.email,
-          subject: welcomeSubject,
-          message: welcomeMessage,
-        },
-      });
+      try {
+        await prisma.studentNotification.create({
+          data: {
+            studentId: created.id,
+            studentEmail: created.email,
+            subject: welcomeSubject,
+            message: welcomeMessage,
+          },
+        });
+      } catch (notifErr: any) {
+        console.warn('⚠️ Could not record initial student notification:', notifErr?.message || notifErr);
+      }
 
-      // Send real SMTP HTML email
-      await sendEmail({
+      // Dispatch SMTP email asynchronously in background
+      sendEmail({
         to: created.email,
         subject: welcomeSubject,
         text: welcomeMessage,
         html: getWelcomeEmailHtml(created.name, created.email, tempPassword),
+      }).catch((err: any) => {
+        console.warn(`⚠️ Background email dispatch failed for ${created.email}:`, err?.message || err);
       });
 
       await audit(req.user!.id, 'CREATE', 'STUDENT', String(created.id), {

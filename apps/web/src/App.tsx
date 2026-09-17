@@ -104,7 +104,7 @@ export default function App() {
     if (minCgpa) params.minCgpa = minCgpa;
     if (selectedSkills.length > 0) {
       params.skills = selectedSkills.join(',');
-      params.skillMatchMode = skillsMatchMode;
+      params.skillsMatchMode = skillsMatchMode;
     }
     if (category) params.category = category;
     if (branch) params.branch = branch;
@@ -683,7 +683,16 @@ export default function App() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onStudentAdded={(name) => {
-          showToast(`Candidate ${name} added and evaluated successfully!`);
+          showToast(`Candidate ${name} added & evaluated successfully!`);
+          setSearch('');
+          setCategory('');
+          setBranch('');
+          setSelectedSkills([]);
+          setMinCgpa('');
+          setHasInternship(false);
+          setHasCertification(false);
+          setIsOverriddenOnly(false);
+          setPage(1);
           fetchData();
         }}
         availableBranches={availableBranches}

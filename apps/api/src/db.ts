@@ -533,7 +533,7 @@ const localDb = {
       if (where.email) {
         return db.users.find((u) => u.email && u.email.toLowerCase() === where.email.toLowerCase()) || null;
       }
-      return db.users[0] || null;
+      return null;
     },
     async upsert({ where, update, create }: any) {
       const db = loadLocalData();
@@ -654,23 +654,44 @@ const localDb = {
 
     async findUnique({ where }: any) {
       const db = loadLocalData();
-      return db.students.find((s) => s.id === where.id || s.externalId === where.externalId) || null;
+      if (!where) return null;
+      if (where.id !== undefined) {
+        return db.students.find((s) => Number(s.id) === Number(where.id)) || null;
+      }
+      if (where.externalId !== undefined) {
+        return db.students.find((s) => String(s.externalId) === String(where.externalId)) || null;
+      }
+      if (where.email !== undefined) {
+        return db.students.find((s) => s.email && s.email.toLowerCase() === String(where.email).toLowerCase()) || null;
+      }
+      return null;
     },
 
     async findFirst({ where }: any) {
       const db = loadLocalData();
-      if (where.OR) {
+      if (!where) return db.students[0] || null;
+      if (where.OR && Array.isArray(where.OR)) {
         return (
           db.students.find((s) =>
             where.OR.some(
               (cond: any) =>
-                (cond.externalId && s.externalId === cond.externalId) ||
-                (cond.email && s.email.toLowerCase() === cond.email.toLowerCase())
+                (cond.externalId && String(s.externalId) === String(cond.externalId)) ||
+                (cond.email && s.email && s.email.toLowerCase() === String(cond.email).toLowerCase())
             )
           ) || null
         );
       }
-      return db.students[0] || null;
+      if (where.id !== undefined) {
+        return db.students.find((s) => Number(s.id) === Number(where.id)) || null;
+      }
+      if (where.externalId !== undefined) {
+        return db.students.find((s) => String(s.externalId) === String(where.externalId)) || null;
+      }
+      if (where.email !== undefined) {
+        return db.students.find((s) => s.email && s.email.toLowerCase() === String(where.email).toLowerCase()) || null;
+      }
+      const matched = await this.findMany({ where });
+      return matched[0] || null;
     },
 
     async create({ data }: any) {
@@ -963,8 +984,9 @@ export const prisma = new Proxy({} as any, {
       };
     }
 
-    const realModel = rawPrisma ? (rawPrisma as any)[modelProp] : null;
-    const localModel = (localDb as any)[modelProp];
+    const modelKey = modelProp === 'notification' ? 'studentNotification' : (modelProp === 'studentNotification' ? 'notification' : modelProp);
+    const realModel = rawPrisma ? ((rawPrisma as any)[modelProp] || (rawPrisma as any)[modelKey]) : null;
+    const localModel = (localDb as any)[modelProp] || (localDb as any)[modelKey];
 
     if (!realModel) {
       return localModel;

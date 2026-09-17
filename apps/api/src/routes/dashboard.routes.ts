@@ -57,7 +57,7 @@ router.get('/summary', requireAuth, async (req, res, next) => {
     if (query.branch) {
       const branches = query.branch.split(',').map((b) => b.trim()).filter(Boolean);
       if (branches.length === 1) {
-        where.branch = { contains: branches[0] };
+        where.branch = { contains: branches[0], mode: 'insensitive' };
       } else if (branches.length > 1) {
         where.branch = { in: branches };
       }
@@ -65,9 +65,9 @@ router.get('/summary', requireAuth, async (req, res, next) => {
 
     if (query.search) {
       where.OR = [
-        { name: { contains: query.search } },
-        { email: { contains: query.search } },
-        { externalId: { contains: query.search } },
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { email: { contains: query.search, mode: 'insensitive' } },
+        { externalId: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 
