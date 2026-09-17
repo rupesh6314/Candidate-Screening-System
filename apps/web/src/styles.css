@@ -2052,7 +2052,8 @@ button {
 .modal-body {
   padding: 24px;
   overflow-y: auto;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .modal-footer {
@@ -2063,6 +2064,10 @@ button {
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 /* Button Variants */
@@ -2510,10 +2515,23 @@ button {
   color: var(--slate-800);
 }
 
+.modal-container > form,
+.modal-content > form,
+.modal-container form,
+.modal-content form,
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .modal-body {
   padding: 20px 24px;
   overflow-y: auto;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .modal-footer {
@@ -2525,6 +2543,9 @@ button {
   justify-content: flex-end;
   gap: 10px;
   flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 /* Form Styles for Modals */

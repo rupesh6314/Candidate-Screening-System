@@ -105,8 +105,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="modal-body">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, overflow: 'hidden' }}>
+          <div className="modal-body" style={{ overflowY: 'auto', flex: '1 1 auto', maxHeight: 'calc(85vh - 130px)' }}>
             {error && <div className="alert-box error mb-4">{error}</div>}
 
             <div className="form-section-title">
