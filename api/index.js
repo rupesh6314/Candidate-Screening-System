@@ -2031,6 +2031,7 @@ async function sendEmail({ to, subject, text, html }) {
   }
 }
 function getWelcomeEmailHtml(name, email, tempPassword) {
+  const portalUrl = "https://candidate-screening-system-api.vercel.app/";
   return `
   <!DOCTYPE html>
   <html>
@@ -2044,7 +2045,7 @@ function getWelcomeEmailHtml(name, email, tempPassword) {
       .body { padding: 30px; color: #cbd5e1; font-size: 15px; line-height: 1.6; }
       .credentials-box { background-color: #0f172a; border-left: 4px solid #06b6d4; padding: 15px 20px; border-radius: 6px; margin: 20px 0; }
       .warning-box { background-color: #451a03; border: 1px solid #b45309; color: #fde68a; padding: 15px 20px; border-radius: 6px; margin: 20px 0; }
-      .btn { display: inline-block; background-color: #4f46e5; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; margin-top: 15px; }
+      .btn { display: inline-block; background-color: #4f46e5; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; margin-top: 15px; }
       .footer { background-color: #0f172a; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #334155; }
     </style>
   </head>
@@ -2061,7 +2062,8 @@ function getWelcomeEmailHtml(name, email, tempPassword) {
         <div class="credentials-box">
           <p style="margin: 0 0 8px 0; color: #94a3b8;">Your Login Credentials:</p>
           <p style="margin: 0 0 4px 0;"><strong>Registered Email:</strong> <span style="color: #38bdf8;">${email}</span></p>
-          <p style="margin: 0;"><strong>Temporary Password:</strong> <code style="background: #1e293b; padding: 3px 8px; border-radius: 4px; color: #f43f5e; font-size: 16px;">${tempPassword}</code></p>
+          <p style="margin: 0 0 4px 0;"><strong>Temporary Password:</strong> <code style="background: #1e293b; padding: 3px 8px; border-radius: 4px; color: #f43f5e; font-size: 16px;">${tempPassword}</code></p>
+          <p style="margin: 0;"><strong>Portal Link:</strong> <a href="${portalUrl}" style="color: #38bdf8; text-decoration: underline;">${portalUrl}</a></p>
         </div>
 
         <div class="warning-box">
@@ -2069,8 +2071,11 @@ function getWelcomeEmailHtml(name, email, tempPassword) {
           When you log in for the first time, you <strong>must change your password immediately</strong> in your profile settings for account security and safety.
         </div>
 
-        <p style="text-align: center;">
-          <a href="${process.env.FRONTEND_ORIGIN || "https://candidate-screening-system.vercel.app"}" class="btn">Log In to My Placement Portal \u2192</a>
+        <p style="text-align: center; margin: 25px 0;">
+          <a href="${portalUrl}" class="btn">Log In to My Placement Portal \u2192</a>
+        </p>
+        <p style="text-align: center; font-size: 13px; color: #94a3b8;">
+          Direct Link: <a href="${portalUrl}" style="color: #38bdf8;">${portalUrl}</a>
         </p>
       </div>
       <div class="footer">
@@ -2082,6 +2087,7 @@ function getWelcomeEmailHtml(name, email, tempPassword) {
   `;
 }
 function getDriveAlertEmailHtml(name, companyName, role, ctc, deadline, minCgpa) {
+  const portalUrl = "https://candidate-screening-system-api.vercel.app/";
   const formattedDate = new Date(deadline).toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "short"
@@ -2098,7 +2104,7 @@ function getDriveAlertEmailHtml(name, companyName, role, ctc, deadline, minCgpa)
       .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
       .body { padding: 30px; color: #cbd5e1; font-size: 15px; line-height: 1.6; }
       .drive-box { background-color: #0f172a; border-left: 4px solid #10b981; padding: 18px 20px; border-radius: 6px; margin: 20px 0; }
-      .btn { display: inline-block; background-color: #10b981; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; margin-top: 15px; }
+      .btn { display: inline-block; background-color: #10b981; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; margin-top: 15px; }
       .footer { background-color: #0f172a; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #334155; }
     </style>
   </head>
@@ -2122,8 +2128,11 @@ function getDriveAlertEmailHtml(name, companyName, role, ctc, deadline, minCgpa)
 
         <p>Please log in to your Student Placement Portal and submit your <strong>Opt-In</strong> response before the deadline expires.</p>
 
-        <p style="text-align: center;">
-          <a href="${process.env.FRONTEND_ORIGIN || "https://candidate-screening-system.vercel.app"}" class="btn">View Drive & Opt-In Now \u2192</a>
+        <p style="text-align: center; margin: 25px 0;">
+          <a href="${portalUrl}" class="btn">View Drive & Opt-In Now \u2192</a>
+        </p>
+        <p style="text-align: center; font-size: 13px; color: #94a3b8;">
+          Direct Link: <a href="${portalUrl}" style="color: #38bdf8;">${portalUrl}</a>
         </p>
       </div>
       <div class="footer">
@@ -2769,6 +2778,7 @@ router2.post(
           bio: `Final year ${data.branch} undergraduate candidate.`
         }
       });
+      const portalUrl = "https://candidate-screening-system-api.vercel.app/";
       const welcomeSubject = "\u{1F393} Welcome to Campus Placement Portal - Your Login Credentials";
       const welcomeMessage = `Hello ${created.name},
 
@@ -2777,9 +2787,12 @@ Your official campus placement student account has been registered by the Placem
 Here are your login credentials:
 \u2022 Registered Email: ${created.email}
 \u2022 Temporary Password: ${tempPassword}
+\u2022 Portal Link: ${portalUrl}
 
 \u26A0\uFE0F CRITICAL SAFETY NOTICE:
-When you log in for the first time, you MUST and SHOULD change your password immediately in your profile settings for more safety and account protection.`;
+When you log in for the first time, you MUST and SHOULD change your password immediately in your profile settings for more safety and account protection.
+
+Open Placement Portal: ${portalUrl}`;
       try {
         await prisma.studentNotification.create({
           data: {
@@ -3480,8 +3493,8 @@ router7.post(
       const result = await sendEmail({
         to,
         subject: "\u{1F9EA} Campus Placement Portal - SMTP Email Delivery Test",
-        text: "Hello,\n\nThis is a verification test email from your Campus Placement & Screening Portal.\n\nYour SMTP credentials are configured and functioning properly. Candidate registration welcome emails and campus recruitment drive notifications will now be delivered directly to student inboxes.\n\nTimestamp: " + (/* @__PURE__ */ new Date()).toISOString(),
-        html: '<div style="font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px; max-width: 500px; margin: 0 auto;"><h2 style="color: #38bdf8; margin-top: 0;">\u{1F9EA} SMTP Delivery Verification</h2><p>Hello,</p><p>Your <strong>Campus Placement Portal</strong> email service is configured and operational!</p><div style="background: #1e293b; padding: 12px 16px; border-left: 4px solid #10b981; border-radius: 6px; margin: 16px 0;">\u2705 <strong>Status:</strong> Live SMTP Dispatched Successfully<br/>\u23F0 <strong>Verified At:</strong> ' + (/* @__PURE__ */ new Date()).toLocaleString() + '</div><p style="font-size: 13px; color: #94a3b8;">When you register candidates, their login credentials and security notices will be sent directly to their verified email.</p></div>'
+        text: "Hello,\n\nThis is a verification test email from your Campus Placement & Screening Portal.\n\nYour SMTP credentials are configured and functioning properly. Candidate registration welcome emails and campus recruitment drive notifications will now be delivered directly to student inboxes.\n\nPortal Link: https://candidate-screening-system-api.vercel.app/\nTimestamp: " + (/* @__PURE__ */ new Date()).toISOString(),
+        html: '<div style="font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px; max-width: 500px; margin: 0 auto;"><h2 style="color: #38bdf8; margin-top: 0;">\u{1F9EA} SMTP Delivery Verification</h2><p>Hello,</p><p>Your <strong>Campus Placement Portal</strong> email service is configured and operational!</p><div style="background: #1e293b; padding: 12px 16px; border-left: 4px solid #10b981; border-radius: 6px; margin: 16px 0;">\u2705 <strong>Status:</strong> Live SMTP Dispatched Successfully<br/>\u23F0 <strong>Verified At:</strong> ' + (/* @__PURE__ */ new Date()).toLocaleString() + '</div><p><a href="https://candidate-screening-system-api.vercel.app/" style="display: inline-block; background: #4f46e5; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">Open Portal (https://candidate-screening-system-api.vercel.app/)</a></p><p style="font-size: 13px; color: #94a3b8;">When you register candidates, their login credentials and security notices will be sent directly to their verified email.</p></div>'
       });
       if (!result.success) {
         return res.status(400).json({

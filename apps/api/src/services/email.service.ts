@@ -181,6 +181,7 @@ export async function sendEmail({ to, subject, text, html }: SendEmailParams): P
 }
 
 export function getWelcomeEmailHtml(name: string, email: string, tempPassword: string): string {
+  const portalUrl = 'https://candidate-screening-system-api.vercel.app/';
   return `
   <!DOCTYPE html>
   <html>
@@ -194,7 +195,7 @@ export function getWelcomeEmailHtml(name: string, email: string, tempPassword: s
       .body { padding: 30px; color: #cbd5e1; font-size: 15px; line-height: 1.6; }
       .credentials-box { background-color: #0f172a; border-left: 4px solid #06b6d4; padding: 15px 20px; border-radius: 6px; margin: 20px 0; }
       .warning-box { background-color: #451a03; border: 1px solid #b45309; color: #fde68a; padding: 15px 20px; border-radius: 6px; margin: 20px 0; }
-      .btn { display: inline-block; background-color: #4f46e5; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; margin-top: 15px; }
+      .btn { display: inline-block; background-color: #4f46e5; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; margin-top: 15px; }
       .footer { background-color: #0f172a; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #334155; }
     </style>
   </head>
@@ -211,7 +212,8 @@ export function getWelcomeEmailHtml(name: string, email: string, tempPassword: s
         <div class="credentials-box">
           <p style="margin: 0 0 8px 0; color: #94a3b8;">Your Login Credentials:</p>
           <p style="margin: 0 0 4px 0;"><strong>Registered Email:</strong> <span style="color: #38bdf8;">${email}</span></p>
-          <p style="margin: 0;"><strong>Temporary Password:</strong> <code style="background: #1e293b; padding: 3px 8px; border-radius: 4px; color: #f43f5e; font-size: 16px;">${tempPassword}</code></p>
+          <p style="margin: 0 0 4px 0;"><strong>Temporary Password:</strong> <code style="background: #1e293b; padding: 3px 8px; border-radius: 4px; color: #f43f5e; font-size: 16px;">${tempPassword}</code></p>
+          <p style="margin: 0;"><strong>Portal Link:</strong> <a href="${portalUrl}" style="color: #38bdf8; text-decoration: underline;">${portalUrl}</a></p>
         </div>
 
         <div class="warning-box">
@@ -219,8 +221,11 @@ export function getWelcomeEmailHtml(name: string, email: string, tempPassword: s
           When you log in for the first time, you <strong>must change your password immediately</strong> in your profile settings for account security and safety.
         </div>
 
-        <p style="text-align: center;">
-          <a href="${process.env.FRONTEND_ORIGIN || 'https://candidate-screening-system.vercel.app'}" class="btn">Log In to My Placement Portal →</a>
+        <p style="text-align: center; margin: 25px 0;">
+          <a href="${portalUrl}" class="btn">Log In to My Placement Portal →</a>
+        </p>
+        <p style="text-align: center; font-size: 13px; color: #94a3b8;">
+          Direct Link: <a href="${portalUrl}" style="color: #38bdf8;">${portalUrl}</a>
         </p>
       </div>
       <div class="footer">
@@ -240,6 +245,7 @@ export function getDriveAlertEmailHtml(
   deadline: string,
   minCgpa: number
 ): string {
+  const portalUrl = 'https://candidate-screening-system-api.vercel.app/';
   const formattedDate = new Date(deadline).toLocaleString('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -257,7 +263,7 @@ export function getDriveAlertEmailHtml(
       .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
       .body { padding: 30px; color: #cbd5e1; font-size: 15px; line-height: 1.6; }
       .drive-box { background-color: #0f172a; border-left: 4px solid #10b981; padding: 18px 20px; border-radius: 6px; margin: 20px 0; }
-      .btn { display: inline-block; background-color: #10b981; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; margin-top: 15px; }
+      .btn { display: inline-block; background-color: #10b981; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; margin-top: 15px; }
       .footer { background-color: #0f172a; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #334155; }
     </style>
   </head>
@@ -281,8 +287,11 @@ export function getDriveAlertEmailHtml(
 
         <p>Please log in to your Student Placement Portal and submit your <strong>Opt-In</strong> response before the deadline expires.</p>
 
-        <p style="text-align: center;">
-          <a href="${process.env.FRONTEND_ORIGIN || 'https://candidate-screening-system.vercel.app'}" class="btn">View Drive & Opt-In Now →</a>
+        <p style="text-align: center; margin: 25px 0;">
+          <a href="${portalUrl}" class="btn">View Drive & Opt-In Now →</a>
+        </p>
+        <p style="text-align: center; font-size: 13px; color: #94a3b8;">
+          Direct Link: <a href="${portalUrl}" style="color: #38bdf8;">${portalUrl}</a>
         </p>
       </div>
       <div class="footer">
