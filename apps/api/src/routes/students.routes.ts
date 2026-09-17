@@ -8,6 +8,7 @@ import { categorize, normalizeList } from '../services/categorization.service.js
 import { parseStudentsCsvWithReport } from '../services/csv.service.js';
 import { getActiveRuleset } from '../services/rules.service.js';
 import { audit } from '../services/audit.service.js';
+import { sendEmail, getWelcomeEmailHtml } from '../services/email.service.js';
 
 export function generateRandomStudentPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -738,6 +739,14 @@ When you log in for the first time, you MUST and SHOULD change your password imm
           subject: welcomeSubject,
           message: welcomeMessage,
         },
+      });
+
+      // Send real SMTP HTML email
+      await sendEmail({
+        to: created.email,
+        subject: welcomeSubject,
+        text: welcomeMessage,
+        html: getWelcomeEmailHtml(created.name, created.email, tempPassword),
       });
 
       await audit(req.user!.id, 'CREATE', 'STUDENT', String(created.id), {
