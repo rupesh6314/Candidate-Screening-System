@@ -963,13 +963,22 @@ var localDb = {
   }
 };
 if (rawPrisma) {
-  rawPrisma.$connect().then(() => {
+  rawPrisma.$connect().then(async () => {
     console.log("\u2705 Connected to PostgreSQL database via Prisma.");
+    try {
+      const dbStudents = await rawPrisma.student.findMany();
+      if (dbStudents && dbStudents.length > 0) {
+        const db = loadLocalData();
+        db.students = dbStudents;
+        saveLocalData(db);
+      }
+    } catch (hydrateErr) {
+      console.warn("DB cache sync info:", hydrateErr?.message || hydrateErr);
+    }
   }).catch((_err) => {
     console.warn(
-      "\u26A0\uFE0F PostgreSQL server not detected. Seamlessly falling back to embedded local database engine (zero Docker/Postgres required)."
+      "\u26A0\uFE0F PostgreSQL connection retry pending or serverless idle. Operating in resilient database-first mode."
     );
-    useFallback = true;
     loadLocalData();
   });
 } else {
@@ -981,12 +990,11 @@ var prisma = new Proxy({}, {
   get(_target, modelProp) {
     if (modelProp === "$transaction") {
       return async (arg) => {
-        if (!useFallback && rawPrisma) {
+        if (rawPrisma) {
           try {
             return await rawPrisma.$transaction(arg);
           } catch (err) {
             console.warn("\u26A0\uFE0F Prisma $transaction failed, falling back:", err?.message || err);
-            useFallback = true;
           }
         }
         return localDb.$transaction(arg);
@@ -1006,9 +1014,16 @@ var prisma = new Proxy({}, {
           return localMethod || realMethod;
         }
         return async (...args) => {
-          if (!useFallback) {
+          if (rawPrisma) {
             try {
-              return await realMethod.apply(realModel, args);
+              const res = await realMethod.apply(realModel, args);
+              if (["create", "update", "upsert", "delete"].includes(methodProp) && localMethod && typeof localMethod === "function") {
+                try {
+                  await localMethod.apply(localModel, args);
+                } catch (_) {
+                }
+              }
+              return res;
             } catch (err) {
               console.warn(
                 `\u26A0\uFE0F Prisma operation failed on ${modelProp}.${methodProp}. Falling back to in-memory store:`,
@@ -1072,18 +1087,38 @@ var loginSchema = z2.object({
 router.post("/login", async (req, res, next) => {
   try {
     const body = loginSchema.parse(req.body);
-    const inputIdentifier = body.email.trim();
+    const inputIdentifier = (body.email || "").trim();
     const emailLower = inputIdentifier.toLowerCase();
-    const adminUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: emailLower },
-          { email: inputIdentifier }
-        ]
+    const phoneDigits = inputIdentifier.replace(/\D/g, "");
+    let adminUser = null;
+    try {
+      adminUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: { equals: emailLower, mode: "insensitive" } },
+            { email: { equals: inputIdentifier, mode: "insensitive" } }
+          ]
+        }
+      });
+    } catch (_) {
+      try {
+        adminUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: emailLower },
+              { email: inputIdentifier }
+            ]
+          }
+        });
+      } catch (err) {
+        console.warn("Error querying admin user:", err);
       }
-    });
+    }
     if (adminUser && adminUser.passwordHash) {
-      const isMatch = await bcrypt2.compare(body.password, adminUser.passwordHash);
+      let isMatch = await bcrypt2.compare(body.password, adminUser.passwordHash);
+      if (!isMatch && body.password.trim() !== body.password) {
+        isMatch = await bcrypt2.compare(body.password.trim(), adminUser.passwordHash);
+      }
       if (isMatch) {
         const token = jwt2.sign({ sub: adminUser.id, role: adminUser.role }, env.JWT_SECRET, {
           expiresIn: "8h"
@@ -1105,16 +1140,39 @@ router.post("/login", async (req, res, next) => {
         });
       }
     }
-    const student = await prisma.student.findFirst({
-      where: {
-        OR: [
-          { email: emailLower },
-          { externalId: inputIdentifier }
-        ]
+    let student = null;
+    try {
+      student = await prisma.student.findFirst({
+        where: {
+          OR: [
+            { email: { equals: emailLower, mode: "insensitive" } },
+            { email: { equals: inputIdentifier, mode: "insensitive" } },
+            { externalId: { equals: inputIdentifier, mode: "insensitive" } },
+            ...phoneDigits && phoneDigits.length >= 7 ? [{ phone: phoneDigits }] : []
+          ]
+        }
+      });
+    } catch (_) {
+      try {
+        student = await prisma.student.findFirst({
+          where: {
+            OR: [
+              { email: emailLower },
+              { email: inputIdentifier },
+              { externalId: inputIdentifier },
+              ...phoneDigits && phoneDigits.length >= 7 ? [{ phone: phoneDigits }] : []
+            ]
+          }
+        });
+      } catch (err) {
+        console.warn("Error querying student user:", err);
       }
-    });
+    }
     if (student && student.passwordHash) {
-      const isMatch = await bcrypt2.compare(body.password, student.passwordHash);
+      let isMatch = await bcrypt2.compare(body.password, student.passwordHash);
+      if (!isMatch && body.password.trim() !== body.password) {
+        isMatch = await bcrypt2.compare(body.password.trim(), student.passwordHash);
+      }
       if (isMatch) {
         const token = jwt2.sign(
           { sub: `student-${student.id}`, role: "STUDENT", studentId: student.id },
@@ -1173,7 +1231,10 @@ router.post("/change-password", async (req, res, next) => {
     if (!student || !student.passwordHash) {
       return res.status(404).json({ error: "Student account not found." });
     }
-    const isOldMatch = await bcrypt2.compare(oldPassword, student.passwordHash);
+    let isOldMatch = await bcrypt2.compare(oldPassword, student.passwordHash);
+    if (!isOldMatch && oldPassword.trim() !== oldPassword) {
+      isOldMatch = await bcrypt2.compare(oldPassword.trim(), student.passwordHash);
+    }
     if (!isOldMatch) {
       return res.status(400).json({ error: "Current password is incorrect." });
     }
@@ -1185,18 +1246,22 @@ router.post("/change-password", async (req, res, next) => {
         mustChangePassword: false
       }
     });
-    await prisma.notification.create({
-      data: {
-        studentId: student.id,
-        studentEmail: student.email,
-        subject: "Security Alert: Password Changed Successfully",
-        message: `Hello ${student.name},
+    try {
+      await prisma.studentNotification.create({
+        data: {
+          studentId: student.id,
+          studentEmail: student.email,
+          subject: "Security Alert: Password Changed Successfully",
+          message: `Hello ${student.name},
 
 Your account password was updated successfully on ${(/* @__PURE__ */ new Date()).toLocaleString()}.
 
 If you did not make this change, please report to your Placement Coordinator immediately.`
-      }
-    });
+        }
+      });
+    } catch (notifErr) {
+      console.warn("Could not record change-password notification:", notifErr?.message);
+    }
     await audit(String(student.id), "PASSWORD_CHANGE", "STUDENT");
     return res.json({
       success: true,

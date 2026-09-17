@@ -18,21 +18,42 @@ const loginSchema = z.object({
 router.post('/login', async (req, res, next) => {
   try {
     const body = loginSchema.parse(req.body);
-    const inputIdentifier = body.email.trim();
+    const inputIdentifier = (body.email || '').trim();
     const emailLower = inputIdentifier.toLowerCase();
+    const phoneDigits = inputIdentifier.replace(/\D/g, '');
 
     // 1. Check if it's an Admin/Coordinator user
-    const adminUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: emailLower },
-          { email: inputIdentifier },
-        ],
-      },
-    });
+    let adminUser = null;
+    try {
+      adminUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: { equals: emailLower, mode: 'insensitive' } },
+            { email: { equals: inputIdentifier, mode: 'insensitive' } },
+          ],
+        },
+      });
+    } catch (_) {
+      try {
+        adminUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: emailLower },
+              { email: inputIdentifier },
+            ],
+          },
+        });
+      } catch (err) {
+        console.warn('Error querying admin user:', err);
+      }
+    }
 
     if (adminUser && adminUser.passwordHash) {
-      const isMatch = await bcrypt.compare(body.password, adminUser.passwordHash);
+      let isMatch = await bcrypt.compare(body.password, adminUser.passwordHash);
+      if (!isMatch && body.password.trim() !== body.password) {
+        isMatch = await bcrypt.compare(body.password.trim(), adminUser.passwordHash);
+      }
+
       if (isMatch) {
         const token = jwt.sign({ sub: adminUser.id, role: adminUser.role }, env.JWT_SECRET, {
           expiresIn: '8h',
@@ -59,17 +80,41 @@ router.post('/login', async (req, res, next) => {
     }
 
     // 2. Check if it's a Student Candidate
-    const student = await prisma.student.findFirst({
-      where: {
-        OR: [
-          { email: emailLower },
-          { externalId: inputIdentifier },
-        ],
-      },
-    });
+    let student = null;
+    try {
+      student = await prisma.student.findFirst({
+        where: {
+          OR: [
+            { email: { equals: emailLower, mode: 'insensitive' } },
+            { email: { equals: inputIdentifier, mode: 'insensitive' } },
+            { externalId: { equals: inputIdentifier, mode: 'insensitive' } },
+            ...(phoneDigits && phoneDigits.length >= 7 ? [{ phone: phoneDigits }] : []),
+          ],
+        },
+      });
+    } catch (_) {
+      try {
+        student = await prisma.student.findFirst({
+          where: {
+            OR: [
+              { email: emailLower },
+              { email: inputIdentifier },
+              { externalId: inputIdentifier },
+              ...(phoneDigits && phoneDigits.length >= 7 ? [{ phone: phoneDigits }] : []),
+            ],
+          },
+        });
+      } catch (err) {
+        console.warn('Error querying student user:', err);
+      }
+    }
 
     if (student && student.passwordHash) {
-      const isMatch = await bcrypt.compare(body.password, student.passwordHash);
+      let isMatch = await bcrypt.compare(body.password, student.passwordHash);
+      if (!isMatch && body.password.trim() !== body.password) {
+        isMatch = await bcrypt.compare(body.password.trim(), student.passwordHash);
+      }
+
       if (isMatch) {
         const token = jwt.sign(
           { sub: `student-${student.id}`, role: 'STUDENT', studentId: student.id },
@@ -136,7 +181,10 @@ router.post('/change-password', async (req, res, next) => {
       return res.status(404).json({ error: 'Student account not found.' });
     }
 
-    const isOldMatch = await bcrypt.compare(oldPassword, student.passwordHash);
+    let isOldMatch = await bcrypt.compare(oldPassword, student.passwordHash);
+    if (!isOldMatch && oldPassword.trim() !== oldPassword) {
+      isOldMatch = await bcrypt.compare(oldPassword.trim(), student.passwordHash);
+    }
     if (!isOldMatch) {
       return res.status(400).json({ error: 'Current password is incorrect.' });
     }
@@ -151,14 +199,18 @@ router.post('/change-password', async (req, res, next) => {
     });
 
     // Post security confirmation notification to student inbox
-    await prisma.notification.create({
-      data: {
-        studentId: student.id,
-        studentEmail: student.email,
-        subject: 'Security Alert: Password Changed Successfully',
-        message: `Hello ${student.name},\n\nYour account password was updated successfully on ${new Date().toLocaleString()}.\n\nIf you did not make this change, please report to your Placement Coordinator immediately.`,
-      },
-    });
+    try {
+      await prisma.studentNotification.create({
+        data: {
+          studentId: student.id,
+          studentEmail: student.email,
+          subject: 'Security Alert: Password Changed Successfully',
+          message: `Hello ${student.name},\n\nYour account password was updated successfully on ${new Date().toLocaleString()}.\n\nIf you did not make this change, please report to your Placement Coordinator immediately.`,
+        },
+      });
+    } catch (notifErr: any) {
+      console.warn('Could not record change-password notification:', notifErr?.message);
+    }
 
     await audit(String(student.id), 'PASSWORD_CHANGE', 'STUDENT');
 

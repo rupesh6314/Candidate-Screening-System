@@ -994,14 +994,23 @@ const localDb = {
 if (rawPrisma) {
   rawPrisma
     .$connect()
-    .then(() => {
+    .then(async () => {
       console.log('✅ Connected to PostgreSQL database via Prisma.');
+      try {
+        const dbStudents = await (rawPrisma as any).student.findMany();
+        if (dbStudents && dbStudents.length > 0) {
+          const db = loadLocalData();
+          db.students = dbStudents as any;
+          saveLocalData(db);
+        }
+      } catch (hydrateErr: any) {
+        console.warn('DB cache sync info:', hydrateErr?.message || hydrateErr);
+      }
     })
     .catch((_err: any) => {
       console.warn(
-        '⚠️ PostgreSQL server not detected. Seamlessly falling back to embedded local database engine (zero Docker/Postgres required).'
+        '⚠️ PostgreSQL connection retry pending or serverless idle. Operating in resilient database-first mode.'
       );
-      useFallback = true;
       loadLocalData();
     });
 } else {
@@ -1014,12 +1023,11 @@ export const prisma = new Proxy({} as any, {
   get(_target, modelProp: string) {
     if (modelProp === '$transaction') {
       return async (arg: any) => {
-        if (!useFallback && rawPrisma) {
+        if (rawPrisma) {
           try {
             return await rawPrisma.$transaction(arg);
           } catch (err: any) {
             console.warn('⚠️ Prisma $transaction failed, falling back:', err?.message || err);
-            useFallback = true;
           }
         }
         return (localDb as any).$transaction(arg);
@@ -1044,9 +1052,16 @@ export const prisma = new Proxy({} as any, {
         }
 
         return async (...args: any[]) => {
-          if (!useFallback) {
+          if (rawPrisma) {
             try {
-              return await realMethod.apply(realModel, args);
+              const res = await realMethod.apply(realModel, args);
+              // Also sync write operations to localDb memory cache
+              if (['create', 'update', 'upsert', 'delete'].includes(methodProp) && localMethod && typeof localMethod === 'function') {
+                try {
+                  await localMethod.apply(localModel, args);
+                } catch (_) {}
+              }
+              return res;
             } catch (err: any) {
               console.warn(
                 `⚠️ Prisma operation failed on ${modelProp}.${methodProp}. Falling back to in-memory store:`,

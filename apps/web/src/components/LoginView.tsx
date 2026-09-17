@@ -45,7 +45,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     try {
       const res = await api.post('/api/auth/login', {
         email: loginEmail.trim(),
-        password: loginPass.trim(),
+        password: loginPass,
       });
 
       onLoginSuccess(res.data.user, res.data.student);
