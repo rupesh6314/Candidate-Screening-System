@@ -8,11 +8,46 @@ interface SendEmailParams {
   html?: string;
 }
 
-function getTransporter(): Transporter | null {
-  const smtpHost = process.env.SMTP_HOST || (process.env.SMTP_SERVER || '');
-  const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-  const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || '';
-  const rawPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || '';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+
+export interface SmtpConfig {
+  host?: string;
+  port?: number;
+  user: string;
+  pass: string;
+  fromName?: string;
+  fromEmail?: string;
+}
+
+const EMAIL_CONFIG_FILE = path.join(os.tmpdir(), 'screening_smtp_config_v2.json');
+let runtimeConfig: SmtpConfig | null = null;
+
+export function loadEmailConfig(): SmtpConfig | null {
+  if (runtimeConfig) return runtimeConfig;
+  try {
+    if (fs.existsSync(EMAIL_CONFIG_FILE)) {
+      runtimeConfig = JSON.parse(fs.readFileSync(EMAIL_CONFIG_FILE, 'utf8'));
+      return runtimeConfig;
+    }
+  } catch (_) {}
+  return null;
+}
+
+export function saveEmailConfig(config: SmtpConfig): void {
+  runtimeConfig = config;
+  try {
+    fs.writeFileSync(EMAIL_CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
+  } catch (_) {}
+}
+
+export function getTransporter(): Transporter | null {
+  const custom = loadEmailConfig();
+  const smtpHost = custom?.host || process.env.SMTP_HOST || process.env.SMTP_SERVER || '';
+  const smtpPort = custom?.port || parseInt(process.env.SMTP_PORT || '587', 10);
+  const smtpUser = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || '';
+  const rawPass = custom?.pass || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || '';
   const smtpPass = rawPass ? rawPass.replace(/\s+/g, '') : '';
 
   if (smtpHost && smtpUser && smtpPass) {
@@ -21,29 +56,52 @@ function getTransporter(): Transporter | null {
       port: smtpPort,
       secure: smtpPort === 465,
       auth: { user: smtpUser, pass: smtpPass },
-      connectionTimeout: 5000,
-      greetingTimeout: 3000,
-      socketTimeout: 5000,
+      connectionTimeout: 7000,
+      greetingTimeout: 4000,
+      socketTimeout: 7000,
     });
   } else if (smtpUser && smtpPass) {
     return nodemailer.createTransport({
       service: 'gmail',
       auth: { user: smtpUser, pass: smtpPass },
-      connectionTimeout: 5000,
-      greetingTimeout: 3000,
-      socketTimeout: 5000,
+      connectionTimeout: 7000,
+      greetingTimeout: 4000,
+      socketTimeout: 7000,
     });
   }
   return null;
 }
 
-export async function sendEmail({ to, subject, text, html }: SendEmailParams): Promise<{ success: boolean; messageId?: string }> {
+export function getEmailConfigStatus(): { configured: boolean; user?: string; host?: string; mode: 'REAL_SMTP' | 'IN_APP_SIMULATOR' } {
+  const custom = loadEmailConfig();
+  const user = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER;
+  const pass = custom?.pass || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS;
+  const host = custom?.host || process.env.SMTP_HOST || 'smtp.gmail.com';
+
+  if (user && pass) {
+    return {
+      configured: true,
+      user: user.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
+      host,
+      mode: 'REAL_SMTP',
+    };
+  }
+  return {
+    configured: false,
+    mode: 'IN_APP_SIMULATOR',
+  };
+}
+
+export async function sendEmail({ to, subject, text, html }: SendEmailParams): Promise<{ success: boolean; messageId?: string; simulated?: boolean }> {
   const transporter = getTransporter();
-  const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || '';
+  const custom = loadEmailConfig();
+  const smtpUser = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || '';
+  const fromName = custom?.fromName || 'Campus Placement Cell';
+  const fromEmail = custom?.fromEmail || smtpUser || 'placements@campus.edu';
 
   if (transporter) {
     try {
-      const fromAddress = process.env.SMTP_FROM || `"Campus Placement Cell" <${smtpUser || 'placements@campus.edu'}>`;
+      const fromAddress = `"${fromName}" <${fromEmail}>`;
       const sendPromise = transporter.sendMail({
         from: fromAddress,
         to,
@@ -52,21 +110,20 @@ export async function sendEmail({ to, subject, text, html }: SendEmailParams): P
         html: html || `<div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">${text.replace(/\n/g, '<br/>')}</div>`,
       });
 
-      // Wrap with 6s timeout so external SMTP delays never hang the request
       const timeoutPromise = new Promise<{ messageId: string }>((_, reject) =>
-        setTimeout(() => reject(new Error('SMTP Connection timed out after 6000ms')), 6000)
+        setTimeout(() => reject(new Error('SMTP Connection timed out after 8000ms')), 8000)
       );
 
       const info = (await Promise.race([sendPromise, timeoutPromise])) as any;
-      console.log(`📧 Outgoing Email Dispatched to ${to}: "${subject}" (MessageID: ${info.messageId})`);
-      return { success: true, messageId: info.messageId };
+      console.log(`📧 [LIVE SMTP] Outgoing Email Dispatched to ${to}: "${subject}" (MessageID: ${info.messageId})`);
+      return { success: true, messageId: info.messageId, simulated: false };
     } catch (error: any) {
       console.warn(`⚠️ SMTP delivery to ${to} deferred or failed (${error.message}). Message recorded in student in-app inbox.`);
-      return { success: false, messageId: `fallback-${Date.now()}` };
+      return { success: false, messageId: `fallback-${Date.now()}`, simulated: true };
     }
   } else {
     console.log(`📬 [In-App Notification Dispatcher] To: ${to} | Subject: "${subject}" (In-App notifications active)`);
-    return { success: true, messageId: `simulated-${Date.now()}` };
+    return { success: true, messageId: `simulated-${Date.now()}`, simulated: true };
   }
 }
 

@@ -26,6 +26,7 @@ import { StudentPortal } from './components/StudentPortal';
 import { PostDriveModal } from './components/PostDriveModal';
 import { DriveApplicantsModal } from './components/DriveApplicantsModal';
 import { CompanyDrivesListModal } from './components/CompanyDrivesListModal';
+import { EmailConfigModal } from './components/EmailConfigModal';
 import { LoginView } from './components/LoginView';
 
 export default function App() {
@@ -87,9 +88,10 @@ export default function App() {
   const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Company Drive Modals
+  // Company Drive & Email Modals
   const [isPostDriveOpen, setIsPostDriveOpen] = useState(false);
   const [isDrivesListOpen, setIsDrivesListOpen] = useState(false);
+  const [isEmailConfigOpen, setIsEmailConfigOpen] = useState(false);
   const [selectedDriveForReview, setSelectedDriveForReview] = useState<CompanyDrive | null>(null);
 
   const showToast = (text: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -501,6 +503,7 @@ export default function App() {
         onOpenAddModal={() => setIsAddModalOpen(true)}
         onOpenPostDriveModal={() => setIsPostDriveOpen(true)}
         onOpenDrivesListModal={() => setIsDrivesListOpen(true)}
+        onOpenEmailConfigModal={() => setIsEmailConfigOpen(true)}
         onExportCsv={handleExportCsv}
         onResetDataset={handleResetDataset}
         onLogout={handleLogout}
@@ -631,6 +634,12 @@ export default function App() {
         isOpen={selectedDriveForReview !== null}
         onClose={() => setSelectedDriveForReview(null)}
         onNotify={showToast}
+      />
+
+      {/* SMTP Email Configuration Modal */}
+      <EmailConfigModal
+        isOpen={isEmailConfigOpen}
+        onClose={() => setIsEmailConfigOpen(false)}
       />
 
       {/* CSV Ingestion Modal */}

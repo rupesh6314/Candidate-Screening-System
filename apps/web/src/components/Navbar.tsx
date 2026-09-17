@@ -33,6 +33,7 @@ interface NavbarProps {
   onOpenDrivesListModal: () => void;
   onExportCsv: () => void;
   onResetDataset: () => void;
+  onOpenEmailConfigModal?: () => void;
   onLogout: () => void;
   isResetting: boolean;
   selectedCount: number;
@@ -53,6 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenDrivesListModal,
   onExportCsv,
   onResetDataset,
+  onOpenEmailConfigModal,
   onLogout,
   isResetting,
   selectedCount,
@@ -227,6 +229,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <div className="menu-item-text">
                         <strong>System Audit Trail</strong>
                         <span>View timeline of manual overrides and drive dispatches</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="features-menu-item"
+                      onClick={() => {
+                        setIsFeaturesOpen(false);
+                        onOpenEmailConfigModal?.();
+                      }}
+                    >
+                      <KeyRound size={15} />
+                      <div className="menu-item-text">
+                        <strong>Email & SMTP Settings</strong>
+                        <span>Configure Gmail App Password or SMTP credentials for real emails</span>
                       </div>
                     </button>
 

@@ -11,6 +11,7 @@ import dashboardRoutes from './routes/dashboard.routes.js';
 import jobsRoutes from './routes/jobs.routes.js';
 import rulesRoutes from './routes/rules.routes.js';
 import auditRoutes from './routes/audit.routes.js';
+import emailRoutes from './routes/email.routes.js';
 import { router as drivesRoutes } from './routes/drives.routes.js';
 import { errorHandler } from './middleware/error.js';
 
@@ -76,6 +77,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/rules', rulesRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/email', emailRoutes);
 app.use('/api/drives', drivesRoutes);
 
 // Production Static Serving for Single-Service Cloud Deployments (Render, Railway, Heroku, Docker)

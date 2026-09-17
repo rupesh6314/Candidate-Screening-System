@@ -1880,11 +1880,35 @@ function previewCohortImpact(proposedRules, students) {
 
 // apps/api/src/services/email.service.ts
 import nodemailer from "nodemailer";
+import fs3 from "fs";
+import path3 from "path";
+import os2 from "os";
+var EMAIL_CONFIG_FILE = path3.join(os2.tmpdir(), "screening_smtp_config_v2.json");
+var runtimeConfig = null;
+function loadEmailConfig() {
+  if (runtimeConfig) return runtimeConfig;
+  try {
+    if (fs3.existsSync(EMAIL_CONFIG_FILE)) {
+      runtimeConfig = JSON.parse(fs3.readFileSync(EMAIL_CONFIG_FILE, "utf8"));
+      return runtimeConfig;
+    }
+  } catch (_) {
+  }
+  return null;
+}
+function saveEmailConfig(config) {
+  runtimeConfig = config;
+  try {
+    fs3.writeFileSync(EMAIL_CONFIG_FILE, JSON.stringify(config, null, 2), "utf8");
+  } catch (_) {
+  }
+}
 function getTransporter() {
-  const smtpHost = process.env.SMTP_HOST || (process.env.SMTP_SERVER || "");
-  const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
-  const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || "";
-  const rawPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || "";
+  const custom = loadEmailConfig();
+  const smtpHost = custom?.host || process.env.SMTP_HOST || process.env.SMTP_SERVER || "";
+  const smtpPort = custom?.port || parseInt(process.env.SMTP_PORT || "587", 10);
+  const smtpUser = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || "";
+  const rawPass = custom?.pass || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || "";
   const smtpPass = rawPass ? rawPass.replace(/\s+/g, "") : "";
   if (smtpHost && smtpUser && smtpPass) {
     return nodemailer.createTransport({
@@ -1892,27 +1916,48 @@ function getTransporter() {
       port: smtpPort,
       secure: smtpPort === 465,
       auth: { user: smtpUser, pass: smtpPass },
-      connectionTimeout: 5e3,
-      greetingTimeout: 3e3,
-      socketTimeout: 5e3
+      connectionTimeout: 7e3,
+      greetingTimeout: 4e3,
+      socketTimeout: 7e3
     });
   } else if (smtpUser && smtpPass) {
     return nodemailer.createTransport({
       service: "gmail",
       auth: { user: smtpUser, pass: smtpPass },
-      connectionTimeout: 5e3,
-      greetingTimeout: 3e3,
-      socketTimeout: 5e3
+      connectionTimeout: 7e3,
+      greetingTimeout: 4e3,
+      socketTimeout: 7e3
     });
   }
   return null;
 }
+function getEmailConfigStatus() {
+  const custom = loadEmailConfig();
+  const user = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER;
+  const pass = custom?.pass || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS;
+  const host = custom?.host || process.env.SMTP_HOST || "smtp.gmail.com";
+  if (user && pass) {
+    return {
+      configured: true,
+      user: user.replace(/(.{2})(.*)(@.*)/, "$1***$3"),
+      host,
+      mode: "REAL_SMTP"
+    };
+  }
+  return {
+    configured: false,
+    mode: "IN_APP_SIMULATOR"
+  };
+}
 async function sendEmail({ to, subject, text, html }) {
   const transporter = getTransporter();
-  const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || "";
+  const custom = loadEmailConfig();
+  const smtpUser = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || "";
+  const fromName = custom?.fromName || "Campus Placement Cell";
+  const fromEmail = custom?.fromEmail || smtpUser || "placements@campus.edu";
   if (transporter) {
     try {
-      const fromAddress = process.env.SMTP_FROM || `"Campus Placement Cell" <${smtpUser || "placements@campus.edu"}>`;
+      const fromAddress = `"${fromName}" <${fromEmail}>`;
       const sendPromise = transporter.sendMail({
         from: fromAddress,
         to,
@@ -1921,18 +1966,18 @@ async function sendEmail({ to, subject, text, html }) {
         html: html || `<div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">${text.replace(/\n/g, "<br/>")}</div>`
       });
       const timeoutPromise = new Promise(
-        (_, reject) => setTimeout(() => reject(new Error("SMTP Connection timed out after 6000ms")), 6e3)
+        (_, reject) => setTimeout(() => reject(new Error("SMTP Connection timed out after 8000ms")), 8e3)
       );
       const info = await Promise.race([sendPromise, timeoutPromise]);
-      console.log(`\u{1F4E7} Outgoing Email Dispatched to ${to}: "${subject}" (MessageID: ${info.messageId})`);
-      return { success: true, messageId: info.messageId };
+      console.log(`\u{1F4E7} [LIVE SMTP] Outgoing Email Dispatched to ${to}: "${subject}" (MessageID: ${info.messageId})`);
+      return { success: true, messageId: info.messageId, simulated: false };
     } catch (error) {
       console.warn(`\u26A0\uFE0F SMTP delivery to ${to} deferred or failed (${error.message}). Message recorded in student in-app inbox.`);
-      return { success: false, messageId: `fallback-${Date.now()}` };
+      return { success: false, messageId: `fallback-${Date.now()}`, simulated: true };
     }
   } else {
     console.log(`\u{1F4EC} [In-App Notification Dispatcher] To: ${to} | Subject: "${subject}" (In-App notifications active)`);
-    return { success: true, messageId: `simulated-${Date.now()}` };
+    return { success: true, messageId: `simulated-${Date.now()}`, simulated: true };
   }
 }
 function getWelcomeEmailHtml(name, email, tempPassword) {
@@ -3315,10 +3360,78 @@ router6.get("/", requireAuth, async (_req, res, next) => {
 });
 var audit_routes_default = router6;
 
-// apps/api/src/routes/drives.routes.ts
+// apps/api/src/routes/email.routes.ts
 import { Router as Router7 } from "express";
+import { z as z7 } from "zod";
 var router7 = Router7();
-router7.get("/", async (_req, res) => {
+router7.get("/status", requireAuth, (_req, res) => {
+  const status = getEmailConfigStatus();
+  res.json(status);
+});
+router7.post(
+  "/config",
+  requireAuth,
+  requireRole("ADMIN", "COORDINATOR"),
+  async (req, res, next) => {
+    try {
+      const schema = z7.object({
+        host: z7.string().optional(),
+        port: z7.coerce.number().optional(),
+        user: z7.string().min(1, "Email address is required"),
+        pass: z7.string().min(1, "Password / App Password is required"),
+        fromName: z7.string().optional(),
+        fromEmail: z7.string().email().optional()
+      });
+      const parsed = schema.parse(req.body);
+      saveEmailConfig(parsed);
+      res.json({
+        success: true,
+        message: "SMTP Email Configuration saved successfully!",
+        status: getEmailConfigStatus()
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+router7.post(
+  "/test",
+  requireAuth,
+  requireRole("ADMIN", "COORDINATOR"),
+  async (req, res, next) => {
+    try {
+      const schema = z7.object({
+        to: z7.string().email("Valid recipient email address is required")
+      });
+      const { to } = schema.parse(req.body);
+      const result = await sendEmail({
+        to,
+        subject: "\u{1F9EA} Campus Placement Portal - SMTP Email Delivery Test",
+        text: "Hello,\n\nThis is a verification test email from your Campus Placement & Screening Portal.\n\nYour SMTP credentials are configured and functioning properly. Candidate registration welcome emails and campus recruitment drive notifications will now be delivered directly to student inboxes.\n\nTimestamp: " + (/* @__PURE__ */ new Date()).toISOString(),
+        html: '<div style="font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px; max-width: 500px; margin: 0 auto;"><h2 style="color: #38bdf8; margin-top: 0;">\u{1F9EA} SMTP Delivery Verification</h2><p>Hello,</p><p>Your <strong>Campus Placement Portal</strong> email service is configured and operational!</p><div style="background: #1e293b; padding: 12px 16px; border-left: 4px solid #10b981; border-radius: 6px; margin: 16px 0;">\u2705 <strong>Status:</strong> Live SMTP Dispatched Successfully<br/>\u23F0 <strong>Verified At:</strong> ' + (/* @__PURE__ */ new Date()).toLocaleString() + '</div><p style="font-size: 13px; color: #94a3b8;">When you register candidates, their login credentials and security notices will be sent directly to their verified email.</p></div>'
+      });
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: "SMTP test failed. Please verify your email, SMTP host, and App Password (for Gmail, generate a 16-character Google App Password in Security settings)."
+        });
+      }
+      res.json({
+        success: true,
+        message: "Test email successfully dispatched to " + to + "! Check your inbox.",
+        details: result
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+var email_routes_default = router7;
+
+// apps/api/src/routes/drives.routes.ts
+import { Router as Router8 } from "express";
+var router8 = Router8();
+router8.get("/", async (_req, res) => {
   try {
     const drives = await prisma.companyDrive.findMany();
     const applications = await prisma.driveApplication.findMany();
@@ -3349,7 +3462,7 @@ router7.get("/", async (_req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch company drives" });
   }
 });
-router7.post("/", async (req, res) => {
+router8.post("/", async (req, res) => {
   try {
     const {
       companyName,
@@ -3484,7 +3597,7 @@ Please log in to your Student Placement Portal and submit your Opt-In response!`
     res.status(500).json({ error: error.message || "Failed to create campus drive" });
   }
 });
-router7.get("/:id", async (req, res) => {
+router8.get("/:id", async (req, res) => {
   try {
     const drive = await prisma.companyDrive.findUnique({ where: { id: req.params.id } });
     if (!drive) {
@@ -3496,7 +3609,7 @@ router7.get("/:id", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch drive details" });
   }
 });
-router7.get("/:id/applicants", async (req, res) => {
+router8.get("/:id/applicants", async (req, res) => {
   try {
     const drive = await prisma.companyDrive.findUnique({ where: { id: req.params.id } });
     if (!drive) {
@@ -3541,7 +3654,7 @@ router7.get("/:id/applicants", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch applicants" });
   }
 });
-router7.patch("/:id/applicants/:studentId", async (req, res) => {
+router8.patch("/:id/applicants/:studentId", async (req, res) => {
   try {
     const { isShortlisted, coordinatorNotes } = req.body;
     const driveId = req.params.id;
@@ -3558,7 +3671,7 @@ router7.patch("/:id/applicants/:studentId", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to update applicant shortlist status" });
   }
 });
-router7.post("/:id/share-with-company", async (req, res) => {
+router8.post("/:id/share-with-company", async (req, res) => {
   try {
     const drive = await prisma.companyDrive.findUnique({ where: { id: req.params.id } });
     if (!drive) {
@@ -3602,7 +3715,7 @@ router7.post("/:id/share-with-company", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to share candidate list with company" });
   }
 });
-router7.get("/student/:studentId", async (req, res) => {
+router8.get("/student/:studentId", async (req, res) => {
   try {
     const studentId = Number(req.params.studentId);
     const student = await prisma.student.findUnique({ where: { id: studentId } });
@@ -3655,7 +3768,7 @@ router7.get("/student/:studentId", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch student drive feed" });
   }
 });
-router7.post("/student/:studentId/respond", async (req, res) => {
+router8.post("/student/:studentId/respond", async (req, res) => {
   try {
     const studentId = Number(req.params.studentId);
     const { driveId, status } = req.body;
@@ -3727,7 +3840,7 @@ router7.post("/student/:studentId/respond", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to submit response" });
   }
 });
-router7.get("/student/:studentId/notifications", async (req, res) => {
+router8.get("/student/:studentId/notifications", async (req, res) => {
   try {
     const studentId = Number(req.params.studentId);
     const notifications = await prisma.notification.findMany({
@@ -3738,7 +3851,7 @@ router7.get("/student/:studentId/notifications", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch notifications" });
   }
 });
-router7.get("/student/:studentId/profile", async (req, res) => {
+router8.get("/student/:studentId/profile", async (req, res) => {
   try {
     const studentId = Number(req.params.studentId);
     const student = await prisma.student.findUnique({ where: { id: studentId } });
@@ -3751,7 +3864,7 @@ router7.get("/student/:studentId/profile", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch student profile" });
   }
 });
-router7.put("/student/:studentId/profile", async (req, res) => {
+router8.put("/student/:studentId/profile", async (req, res) => {
   try {
     const studentId = Number(req.params.studentId);
     const { name, phone, branch, cgpa, skills, resumeUrl, profileImage, bio } = req.body;
@@ -3791,12 +3904,12 @@ var errorHandler = (e, _q, res, _n) => {
 };
 
 // apps/api/src/app.ts
-import path3 from "path";
-import fs3 from "fs";
+import path4 from "path";
+import fs4 from "fs";
 import { fileURLToPath as fileURLToPath3 } from "url";
 var __filename3 = fileURLToPath3(import.meta.url);
-var __dirname3 = path3.dirname(__filename3);
-var staticDir = path3.resolve(__dirname3, "../../web/dist");
+var __dirname3 = path4.dirname(__filename3);
+var staticDir = path4.resolve(__dirname3, "../../web/dist");
 var app = express();
 app.disable("x-powered-by");
 app.use(
@@ -3842,14 +3955,15 @@ app.use("/api/dashboard", dashboard_routes_default);
 app.use("/api/jobs", jobs_routes_default);
 app.use("/api/rules", rules_routes_default);
 app.use("/api/audit", audit_routes_default);
-app.use("/api/drives", router7);
-if (fs3.existsSync(staticDir)) {
+app.use("/api/email", email_routes_default);
+app.use("/api/drives", router8);
+if (fs4.existsSync(staticDir)) {
   app.use(express.static(staticDir));
   app.use((req, res, next) => {
     if (req.path.startsWith("/api") || req.path.startsWith("/health")) {
       return next();
     }
-    res.sendFile(path3.join(staticDir, "index.html"));
+    res.sendFile(path4.join(staticDir, "index.html"));
   });
 }
 app.use(errorHandler);
