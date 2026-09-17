@@ -129,16 +129,17 @@ export default function App() {
   ]);
 
   // Fetch Core Candidate and Dashboard Data
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (overrideParams?: Record<string, any>) => {
     if (!currentUser) return;
     setLoading(true);
     setError('');
     try {
-      const params = buildQueryParams();
+      const baseParams = overrideParams || buildQueryParams();
+      const params = { ...baseParams, _t: Date.now() };
       const [studentsRes, summaryRes, rulesRes, drivesRes] = await Promise.all([
         api.get('/api/students', { params }),
         api.get('/api/dashboard/summary', { params }),
-        api.get('/api/rules').catch(() => ({ data: { rules: null } })),
+        api.get('/api/rules', { params: { _t: Date.now() } }).catch(() => ({ data: { rules: null } })),
         fetchCompanyDrives().catch(() => []),
       ]);
 
@@ -696,7 +697,8 @@ export default function App() {
           setSortBy('cgpa');
           setSortOrder('desc');
           setPage(1);
-          fetchData();
+          // Pass clean parameters immediately so both roster and dashboard metrics refresh synchronously
+          fetchData({ sortBy: 'cgpa', sortOrder: 'desc' });
         }}
         availableBranches={availableBranches}
       />

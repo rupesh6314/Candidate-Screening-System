@@ -54,6 +54,14 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Prevent caching on all API endpoints so updates and additions are immediately visible
+app.use('/api', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',

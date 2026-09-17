@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
@@ -9,6 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_DIR = path.resolve(__dirname, '../data');
 const DATA_FILE = path.join(DATA_DIR, 'screening.json');
+const TMP_DATA_FILE = path.join(os.tmpdir(), 'screening_persistent_store_v2.json');
 
 let rawPrisma: PrismaClient | null = null;
 let useFallback = false;
@@ -414,7 +416,9 @@ function loadLocalData(): LocalDatabase {
   if (memoryDb) return memoryDb;
   let db: LocalDatabase | null = null;
   try {
-    if (fs.existsSync(DATA_FILE)) {
+    if (fs.existsSync(TMP_DATA_FILE)) {
+      db = JSON.parse(fs.readFileSync(TMP_DATA_FILE, 'utf8'));
+    } else if (fs.existsSync(DATA_FILE)) {
       db = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
     }
   } catch (_) {}
@@ -500,6 +504,12 @@ function loadLocalData(): LocalDatabase {
 
 function saveLocalData(db: LocalDatabase) {
   memoryDb = db;
+  // 1. Always write to os.tmpdir() which is guaranteed writable on Vercel AWS Lambda /tmp
+  try {
+    fs.writeFileSync(TMP_DATA_FILE, JSON.stringify(db, null, 2), 'utf8');
+  } catch (_) {}
+
+  // 2. Also write to local project DATA_DIR in local development
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });

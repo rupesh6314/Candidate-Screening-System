@@ -509,9 +509,144 @@
       "bio": "Final year Mechanical undergraduate candidate.",
       "mustChangePassword": false,
       "passwordHash": "$2b$10$ki/4X1FJPckZI5FjmcKFt.A.H5eS7l/XGJfHX2zlDZqZWRFIB0vRG"
+    },
+    {
+      "id": 16,
+      "externalId": "TOP-001",
+      "name": "Aakash Verma",
+      "email": "aakash.v@gmail.com",
+      "phone": null,
+      "branch": "Computer Science",
+      "cgpa": 9.5,
+      "skills": [
+        "React",
+        "Node.js",
+        "Python",
+        "AWS",
+        "PostgreSQL"
+      ],
+      "projects": [
+        "AI Screening System",
+        "E-Commerce Platform"
+      ],
+      "internships": [
+        "Software Engineer Intern at Google"
+      ],
+      "certifications": [
+        "AWS Certified Solutions Architect"
+      ],
+      "score": 9,
+      "category": "STRONG",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$D5PRh/kaPgnLES76u.8vsuccUlmh9RqLZHdAF2GWvavnaG3HE9Yoa",
+      "mustChangePassword": true,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Aakash%20Verma",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-TOP-001/view",
+      "bio": "Final year Computer Science undergraduate candidate.",
+      "createdAt": "2026-09-17T16:00:58.076Z",
+      "updatedAt": "2026-09-17T16:00:58.076Z"
+    },
+    {
+      "id": 17,
+      "externalId": "ST-999",
+      "name": "Zoya Khan",
+      "email": "zoya.k@gmail.com",
+      "phone": null,
+      "branch": "Information Technology",
+      "cgpa": 9.7,
+      "skills": [
+        "React",
+        "Node.js",
+        "Python"
+      ],
+      "projects": [
+        "Project A"
+      ],
+      "internships": [
+        "Intern at Google"
+      ],
+      "certifications": [
+        "AWS Certified"
+      ],
+      "score": 8,
+      "category": "STRONG",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$ENnfmgQd5ZOo2pYpUGjOYeeNc3.E27JEUG03XrPYKvB/sH3y3W8BK",
+      "mustChangePassword": true,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoya%20Khan",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-ST-999/view",
+      "bio": "Final year Information Technology undergraduate candidate.",
+      "createdAt": "2026-09-17T16:11:06.037Z",
+      "updatedAt": "2026-09-17T16:11:06.037Z"
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1789661466040-u6u59",
+      "userId": "coord-1",
+      "action": "CREATE",
+      "entity": "STUDENT",
+      "entityId": "17",
+      "metadata": {
+        "email": "zoya.k@gmail.com",
+        "temporaryPasswordDispatched": true
+      },
+      "createdAt": "2026-09-17T16:11:06.040Z"
+    },
+    {
+      "id": "log-1789661408788-a4ctp",
+      "userId": "coord-1",
+      "action": "CREATE",
+      "entity": "STUDENT",
+      "entityId": "18",
+      "metadata": {
+        "email": "tanvi.k@gmail.com",
+        "temporaryPasswordDispatched": true
+      },
+      "createdAt": "2026-09-17T16:10:08.788Z"
+    },
+    {
+      "id": "log-1789660858082-ill8i",
+      "userId": "coord-1",
+      "action": "CREATE",
+      "entity": "STUDENT",
+      "entityId": "16",
+      "metadata": {
+        "email": "aakash.v@gmail.com",
+        "temporaryPasswordDispatched": true
+      },
+      "createdAt": "2026-09-17T16:00:58.082Z"
+    },
+    {
+      "id": "log-1789660522509-2hxmg",
+      "userId": "coord-1",
+      "action": "CREATE",
+      "entity": "STUDENT",
+      "entityId": "17",
+      "metadata": {
+        "email": "priya.sharma999@gmail.com",
+        "temporaryPasswordDispatched": true
+      },
+      "createdAt": "2026-09-17T15:55:22.509Z"
+    },
+    {
+      "id": "log-1789660272754-6ggtn",
+      "userId": "coord-1",
+      "action": "CREATE",
+      "entity": "STUDENT",
+      "entityId": "16",
+      "metadata": {
+        "email": "johntest@test.com",
+        "temporaryPasswordDispatched": true
+      },
+      "createdAt": "2026-09-17T15:51:12.754Z"
+    },
     {
       "id": "log-1789651765646-ugyb2",
       "userId": "user-1789651765636",
@@ -1022,6 +1157,30 @@
     }
   ],
   "notifications": [
+    {
+      "id": "notif-1789661466038-zh2e4",
+      "studentId": 17,
+      "studentEmail": "zoya.k@gmail.com",
+      "subject": "🎓 Welcome to Campus Placement Portal - Your Login Credentials",
+      "message": "Hello Zoya Khan,\n\nYour official campus placement student account has been registered by the Placement Coordinator.\n\nHere are your login credentials:\n• Registered Email: zoya.k@gmail.com\n• Temporary Password: Temp#2VFE!\n\n⚠️ CRITICAL SAFETY NOTICE:\nWhen you log in for the first time, you MUST and SHOULD change your password immediately in your profile settings for more safety and account protection.",
+      "sentAt": "2026-09-17T16:11:06.038Z"
+    },
+    {
+      "id": "notif-1789660858077-05asj",
+      "studentId": 16,
+      "studentEmail": "aakash.v@gmail.com",
+      "subject": "🎓 Welcome to Campus Placement Portal - Your Login Credentials",
+      "message": "Hello Aakash Verma,\n\nYour official campus placement student account has been registered by the Placement Coordinator.\n\nHere are your login credentials:\n• Registered Email: aakash.v@gmail.com\n• Temporary Password: Temp#Y8YK!\n\n⚠️ CRITICAL SAFETY NOTICE:\nWhen you log in for the first time, you MUST and SHOULD change your password immediately in your profile settings for more safety and account protection.",
+      "sentAt": "2026-09-17T16:00:58.077Z"
+    },
+    {
+      "id": "notif-1789660268541-tknve",
+      "studentId": 16,
+      "studentEmail": "johntest@test.com",
+      "subject": "🎓 Welcome to Campus Placement Portal - Your Login Credentials",
+      "message": "Hello John Test,\n\nYour official campus placement student account has been registered by the Placement Coordinator.\n\nHere are your login credentials:\n• Registered Email: johntest@test.com\n• Temporary Password: Temp#GKEH!\n\n⚠️ CRITICAL SAFETY NOTICE:\nWhen you log in for the first time, you MUST and SHOULD change your password immediately in your profile settings for more safety and account protection.",
+      "sentAt": "2026-09-17T15:51:08.541Z"
+    },
     {
       "id": "notif-1789649046950-jg1oj",
       "studentId": 1,

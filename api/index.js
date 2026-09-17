@@ -33,6 +33,7 @@ import { z as z2 } from "zod";
 // apps/api/src/db.ts
 import fs from "fs";
 import path from "path";
+import os from "os";
 import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
@@ -40,6 +41,7 @@ var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
 var DATA_DIR = path.resolve(__dirname, "../data");
 var DATA_FILE = path.join(DATA_DIR, "screening.json");
+var TMP_DATA_FILE = path.join(os.tmpdir(), "screening_persistent_store_v2.json");
 var rawPrisma = null;
 var useFallback = false;
 try {
@@ -420,7 +422,9 @@ function loadLocalData() {
   if (memoryDb) return memoryDb;
   let db = null;
   try {
-    if (fs.existsSync(DATA_FILE)) {
+    if (fs.existsSync(TMP_DATA_FILE)) {
+      db = JSON.parse(fs.readFileSync(TMP_DATA_FILE, "utf8"));
+    } else if (fs.existsSync(DATA_FILE)) {
       db = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
     }
   } catch (_) {
@@ -500,6 +504,10 @@ function loadLocalData() {
 }
 function saveLocalData(db) {
   memoryDb = db;
+  try {
+    fs.writeFileSync(TMP_DATA_FILE, JSON.stringify(db, null, 2), "utf8");
+  } catch (_) {
+  }
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -3815,6 +3823,12 @@ var limiter = rateLimit({
   legacyHeaders: false
 });
 app.use(limiter);
+app.use("/api", (_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
 app.get("/health", (_req, res) => {
   res.json({
     status: "ok",
