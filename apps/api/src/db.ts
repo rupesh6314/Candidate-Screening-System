@@ -948,16 +948,62 @@ if (rawPrisma) {
 }
 
 export const prisma = new Proxy({} as any, {
-  get(_target, prop) {
-    if (!useFallback && rawPrisma) {
-      const real = (rawPrisma as any)[prop];
-      if (real !== undefined) {
-        return real;
-      }
+  get(_target, modelProp: string) {
+    if (modelProp === '$transaction') {
+      return async (arg: any) => {
+        if (!useFallback && rawPrisma) {
+          try {
+            return await rawPrisma.$transaction(arg);
+          } catch (err: any) {
+            console.warn('⚠️ Prisma $transaction failed, falling back:', err?.message || err);
+            useFallback = true;
+          }
+        }
+        return (localDb as any).$transaction(arg);
+      };
     }
-    return (localDb as any)[prop];
+
+    const realModel = rawPrisma ? (rawPrisma as any)[modelProp] : null;
+    const localModel = (localDb as any)[modelProp];
+
+    if (!realModel) {
+      return localModel;
+    }
+
+    return new Proxy(realModel, {
+      get(_modelTarget, methodProp: string) {
+        const realMethod = realModel[methodProp];
+        const localMethod = localModel ? localModel[methodProp] : null;
+
+        if (typeof realMethod !== 'function') {
+          return localMethod || realMethod;
+        }
+
+        return async (...args: any[]) => {
+          if (!useFallback) {
+            try {
+              return await realMethod.apply(realModel, args);
+            } catch (err: any) {
+              console.warn(
+                `⚠️ Prisma operation failed on ${modelProp}.${methodProp}. Falling back to in-memory store:`,
+                err?.message || err
+              );
+              if (localMethod && typeof localMethod === 'function') {
+                return await localMethod.apply(localModel, args);
+              }
+              throw err;
+            }
+          }
+          if (localMethod && typeof localMethod === 'function') {
+            return await localMethod.apply(localModel, args);
+          }
+          return null;
+        };
+      },
+    });
   },
 });
+
 
 
 

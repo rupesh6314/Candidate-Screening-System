@@ -916,14 +916,54 @@ if (rawPrisma) {
   loadLocalData();
 }
 var prisma = new Proxy({}, {
-  get(_target, prop) {
-    if (!useFallback && rawPrisma) {
-      const real = rawPrisma[prop];
-      if (real !== void 0) {
-        return real;
-      }
+  get(_target, modelProp) {
+    if (modelProp === "$transaction") {
+      return async (arg) => {
+        if (!useFallback && rawPrisma) {
+          try {
+            return await rawPrisma.$transaction(arg);
+          } catch (err) {
+            console.warn("\u26A0\uFE0F Prisma $transaction failed, falling back:", err?.message || err);
+            useFallback = true;
+          }
+        }
+        return localDb.$transaction(arg);
+      };
     }
-    return localDb[prop];
+    const realModel = rawPrisma ? rawPrisma[modelProp] : null;
+    const localModel = localDb[modelProp];
+    if (!realModel) {
+      return localModel;
+    }
+    return new Proxy(realModel, {
+      get(_modelTarget, methodProp) {
+        const realMethod = realModel[methodProp];
+        const localMethod = localModel ? localModel[methodProp] : null;
+        if (typeof realMethod !== "function") {
+          return localMethod || realMethod;
+        }
+        return async (...args) => {
+          if (!useFallback) {
+            try {
+              return await realMethod.apply(realModel, args);
+            } catch (err) {
+              console.warn(
+                `\u26A0\uFE0F Prisma operation failed on ${modelProp}.${methodProp}. Falling back to in-memory store:`,
+                err?.message || err
+              );
+              if (localMethod && typeof localMethod === "function") {
+                return await localMethod.apply(localModel, args);
+              }
+              throw err;
+            }
+          }
+          if (localMethod && typeof localMethod === "function") {
+            return await localMethod.apply(localModel, args);
+          }
+          return null;
+        };
+      }
+    });
   }
 });
 
