@@ -7,8 +7,16 @@ import rateLimit from "express-rate-limit";
 import morgan from "morgan";
 
 // apps/api/src/config.ts
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import { z } from "zod";
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = path.dirname(__filename);
 try {
+  dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+  dotenv.config({ path: path.resolve(__dirname, "../.env") });
+  dotenv.config();
   process.loadEnvFile?.();
 } catch (_) {
 }
@@ -32,16 +40,16 @@ import { z as z2 } from "zod";
 
 // apps/api/src/db.ts
 import fs from "fs";
-import path from "path";
+import path2 from "path";
 import os from "os";
-import { fileURLToPath } from "url";
+import { fileURLToPath as fileURLToPath2 } from "url";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
-var __filename = fileURLToPath(import.meta.url);
-var __dirname = path.dirname(__filename);
-var DATA_DIR = path.resolve(__dirname, "../data");
-var DATA_FILE = path.join(DATA_DIR, "screening.json");
-var TMP_DATA_FILE = path.join(os.tmpdir(), "screening_persistent_store_v2.json");
+var __filename2 = fileURLToPath2(import.meta.url);
+var __dirname2 = path2.dirname(__filename2);
+var DATA_DIR = path2.resolve(__dirname2, "../data");
+var DATA_FILE = path2.join(DATA_DIR, "screening.json");
+var TMP_DATA_FILE = path2.join(os.tmpdir(), "screening_persistent_store_v2.json");
 var rawPrisma = null;
 var useFallback = false;
 try {
@@ -1713,12 +1721,12 @@ function parseStudentsCsvWithReport(csvContent, customRules) {
 
 // apps/api/src/services/rules.service.ts
 import fs2 from "fs";
-import path2 from "path";
-import { fileURLToPath as fileURLToPath2 } from "url";
-var __filename2 = fileURLToPath2(import.meta.url);
-var __dirname2 = path2.dirname(__filename2);
-var DATA_DIR2 = path2.resolve(__dirname2, "../../data");
-var RULES_FILE = path2.join(DATA_DIR2, "rules.json");
+import path3 from "path";
+import { fileURLToPath as fileURLToPath3 } from "url";
+var __filename3 = fileURLToPath3(import.meta.url);
+var __dirname3 = path3.dirname(__filename3);
+var DATA_DIR2 = path3.resolve(__dirname3, "../../data");
+var RULES_FILE = path3.join(DATA_DIR2, "rules.json");
 var cachedRules = null;
 function ensureDataDir() {
   try {
@@ -1836,9 +1844,9 @@ function previewCohortImpact(proposedRules, students) {
 // apps/api/src/services/email.service.ts
 import nodemailer from "nodemailer";
 import fs3 from "fs";
-import path3 from "path";
+import path4 from "path";
 import os2 from "os";
-var EMAIL_CONFIG_FILE = path3.join(os2.tmpdir(), "screening_smtp_config_v2.json");
+var EMAIL_CONFIG_FILE = path4.join(os2.tmpdir(), "screening_smtp_config_v2.json");
 var runtimeConfig = null;
 function loadEmailConfig() {
   if (runtimeConfig) return runtimeConfig;
@@ -3980,12 +3988,12 @@ var errorHandler = (e, _q, res, _n) => {
 };
 
 // apps/api/src/app.ts
-import path4 from "path";
+import path5 from "path";
 import fs4 from "fs";
-import { fileURLToPath as fileURLToPath3 } from "url";
-var __filename3 = fileURLToPath3(import.meta.url);
-var __dirname3 = path4.dirname(__filename3);
-var staticDir = path4.resolve(__dirname3, "../../web/dist");
+import { fileURLToPath as fileURLToPath4 } from "url";
+var __filename4 = fileURLToPath4(import.meta.url);
+var __dirname4 = path5.dirname(__filename4);
+var staticDir = path5.resolve(__dirname4, "../../web/dist");
 var app = express();
 app.disable("x-powered-by");
 app.use(
@@ -4039,7 +4047,7 @@ if (fs4.existsSync(staticDir)) {
     if (req.path.startsWith("/api") || req.path.startsWith("/health")) {
       return next();
     }
-    res.sendFile(path4.join(staticDir, "index.html"));
+    res.sendFile(path5.join(staticDir, "index.html"));
   });
 }
 app.use(errorHandler);
