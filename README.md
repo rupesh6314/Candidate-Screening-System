@@ -66,19 +66,17 @@ npm run db:migrate -w apps/api
 npm run db:seed -w apps/api
 ```
 
-### 2. Run the Development Servers
+### 2. Run the Application
 ```bash
 npm run dev
 ```
 
-- **Frontend Portal**: `http://localhost:5173`
-- **Backend REST API**: `http://localhost:4000`
-- **Health Check**: `http://localhost:4000/health`
+- **Frontend Portal**: `http://localhost:5173` (or your deployed cloud URL)
+- **Backend REST API**: `http://localhost:4000` (or `/api` on production)
 
-### 3. Default Placement Officer Credentials
-- **Email**: `admin@placement.edu`
-- **Password**: `Admin@Placement2026!`
-- *(Or click the **"Quick Demo Sign-in"** button on the login screen)*
+### 3. Dedicated Role Portals
+- **Placement Coordinator**: Login using your administrator credentials (`admin@placement.edu`).
+- **Student Candidate**: Login with your registered student email and password to view eligible drives, submit opt-ins, and manage notifications.
 
 ---
 

@@ -1,7 +1,6 @@
 # Smart Candidate Screening System — Official Project Report & Submission
 
-- **Live Deployed Application**: `https://smart-candidate-screening.vercel.app` *(or local: `http://localhost:5173`)*
-- **GitHub Repository**: `https://github.com/placement-cell/smart-candidate-screening-system`
+- **Live Deployed Application**: `https://campus-placement-portal.onrender.com`
 - **Assessment Evaluation Organization**: STON Technology Assessment
 
 ---
