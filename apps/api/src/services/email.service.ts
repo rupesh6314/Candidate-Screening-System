@@ -13,8 +13,8 @@ let transporter: Transporter | null = null;
 // Initialize transporter if SMTP credentials are provided
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
-const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || 'admin.placementscollege@gmail.com';
-const rawPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || 'hvjzexohouykzqkb';
+const smtpUser = process.env.SMTP_USER || process.env.GMAIL_USER || '';
+const rawPass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || '';
 const smtpPass = rawPass ? rawPass.replace(/\s+/g, '') : '';
 
 if (smtpHost && smtpUser && smtpPass) {
