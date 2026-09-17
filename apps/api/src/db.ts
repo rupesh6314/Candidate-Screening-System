@@ -429,8 +429,8 @@ function loadLocalData(): LocalDatabase {
       users: [
         {
           id: 'cuid-admin-1',
-          email: 'admin.placementscollege@gmail.com',
-          passwordHash: bcrypt.hashSync('admin', 10),
+          email: process.env.ADMIN_EMAIL || 'admin@placement.edu',
+          passwordHash: bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'Admin@Placement2026!', 10),
           name: 'Placement Officer',
           role: 'ADMIN',
           createdAt: new Date().toISOString(),

@@ -434,8 +434,8 @@ function loadLocalData() {
       users: [
         {
           id: "cuid-admin-1",
-          email: "admin.placementscollege@gmail.com",
-          passwordHash: bcrypt.hashSync("admin", 10),
+          email: process.env.ADMIN_EMAIL || "admin@placement.edu",
+          passwordHash: bcrypt.hashSync(process.env.ADMIN_PASSWORD || "Admin@Placement2026!", 10),
           name: "Placement Officer",
           role: "ADMIN",
           createdAt: (/* @__PURE__ */ new Date()).toISOString(),
@@ -1055,138 +1055,89 @@ async function audit(userId, action, entity, entityId, metadata) {
 // apps/api/src/routes/auth.routes.ts
 var router = Router();
 var loginSchema = z2.object({
-  email: z2.string().email(),
-  password: z2.string().min(1),
+  email: z2.string().min(1, "Email address or Roll ID is required"),
+  password: z2.string().min(1, "Password is required"),
   role: z2.enum(["ADMIN", "COORDINATOR", "STUDENT"]).optional()
 });
 router.post("/login", async (req, res, next) => {
   try {
     const body = loginSchema.parse(req.body);
-    const emailLower = body.email.toLowerCase().trim();
-    let adminUser = await prisma.user.findUnique({
-      where: { email: emailLower }
-    });
-    const isRecognizedAdminEmail = emailLower === "admin.placementscollege@gmail.com" || emailLower === "admin@placement.edu" || emailLower === env.ADMIN_EMAIL.toLowerCase();
-    if (!adminUser && isRecognizedAdminEmail) {
-      if (body.password === "admin" || body.password === "Admin@Placement2026!" || body.password === env.ADMIN_PASSWORD) {
-        const hash = await bcrypt2.hash(body.password, 10);
-        adminUser = await prisma.user.upsert({
-          where: { email: emailLower },
-          update: { role: "ADMIN", name: "Placement Officer", passwordHash: hash },
-          create: {
-            email: emailLower,
-            name: "Placement Officer",
-            passwordHash: hash,
-            role: "ADMIN"
-          }
-        });
-      }
-    }
-    if (adminUser) {
-      const isMatch = body.password === "admin" || body.password === "Admin@Placement2026!" || body.password === env.ADMIN_PASSWORD || adminUser.passwordHash && await bcrypt2.compare(body.password, adminUser.passwordHash);
-      if (!isMatch) {
-        return res.status(401).json({ error: "Invalid email or password for Placement Officer." });
-      }
-      const token = jwt2.sign({ sub: adminUser.id, role: adminUser.role }, env.JWT_SECRET, {
-        expiresIn: "8h"
-      });
-      res.cookie("screening_token", token, {
-        httpOnly: true,
-        secure: env.NODE_ENV === "production",
-        sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-        maxAge: 8 * 60 * 60 * 1e3
-      });
-      await audit(adminUser.id, "LOGIN", "AUTH");
-      return res.json({
-        user: {
-          id: adminUser.id,
-          email: adminUser.email,
-          name: adminUser.name,
-          role: adminUser.role
-        }
-      });
-    }
-    let student = await prisma.student.findFirst({
+    const inputIdentifier = body.email.trim();
+    const emailLower = inputIdentifier.toLowerCase();
+    const adminUser = await prisma.user.findFirst({
       where: {
         OR: [
           { email: emailLower },
-          { externalId: body.email }
+          { email: inputIdentifier }
         ]
       }
     });
-    if (!student && emailLower.includes("@")) {
-      const emailUsername = emailLower.split("@")[0];
-      const cleanName = emailUsername.split(/[._0-9]+/).filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(" ") || "Student Candidate";
-      const passwordInput = body.password.trim();
-      if (passwordInput.length >= 3) {
-        student = await prisma.student.create({
-          data: {
-            externalId: `CS-${Date.now().toString().slice(-4)}`,
-            name: cleanName,
-            email: emailLower,
-            phone: "9876543210",
-            branch: "Computer Science",
-            cgpa: 8.5,
-            skills: ["Python", "Data Structures", "Web Development", "SQL", "React"],
-            projects: ["Campus Placement Portal", "Portfolio Project"],
-            internships: ["Software Engineering Intern"],
-            certifications: ["Cloud & Web Fundamentals"],
-            score: 8,
-            category: "STRONG",
-            passwordHash: await bcrypt2.hash(passwordInput, 10),
-            mustChangePassword: true,
-            profileImage: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanName)}`,
-            resumeUrl: `https://drive.google.com/file/d/sample-resume-${cleanName.replace(/\s+/g, "-").toLowerCase()}/view`,
-            bio: `Final year Computer Science undergraduate candidate.`
+    if (adminUser && adminUser.passwordHash) {
+      const isMatch = await bcrypt2.compare(body.password, adminUser.passwordHash);
+      if (isMatch) {
+        const token = jwt2.sign({ sub: adminUser.id, role: adminUser.role }, env.JWT_SECRET, {
+          expiresIn: "8h"
+        });
+        res.cookie("screening_token", token, {
+          httpOnly: true,
+          secure: env.NODE_ENV === "production",
+          sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 8 * 60 * 60 * 1e3
+        });
+        await audit(adminUser.id, "LOGIN", "AUTH");
+        return res.json({
+          user: {
+            id: adminUser.id,
+            email: adminUser.email,
+            name: adminUser.name,
+            role: adminUser.role
           }
         });
       }
     }
-    if (student) {
-      const firstName = (student.name || "").trim().split(" ")[0];
-      const defaultExpectedPassword = `${firstName}@2020`;
-      let isMatch = false;
-      if (student.passwordHash) {
-        isMatch = await bcrypt2.compare(body.password, student.passwordHash);
+    const student = await prisma.student.findFirst({
+      where: {
+        OR: [
+          { email: emailLower },
+          { externalId: inputIdentifier }
+        ]
       }
-      if (!isMatch) {
-        const inputLower = body.password.toLowerCase().trim();
-        isMatch = body.password === defaultExpectedPassword || inputLower === defaultExpectedPassword.toLowerCase() || inputLower === "name@2020" || body.password === `${student.name.replace(/\s+/g, "")}@2020` || inputLower === `${student.name.replace(/\s+/g, "").toLowerCase()}@2020` || body.password === "Student@2026!" || body.password === "Student@2020!" || body.password.startsWith("Temp#") || body.password === String(student.externalId);
-      }
-      if (!isMatch) {
-        return res.status(401).json({
-          error: "Invalid password. Please check your credentials."
+    });
+    if (student && student.passwordHash) {
+      const isMatch = await bcrypt2.compare(body.password, student.passwordHash);
+      if (isMatch) {
+        const token = jwt2.sign(
+          { sub: `student-${student.id}`, role: "STUDENT", studentId: student.id },
+          env.JWT_SECRET,
+          { expiresIn: "8h" }
+        );
+        res.cookie("screening_token", token, {
+          httpOnly: true,
+          secure: env.NODE_ENV === "production",
+          sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 8 * 60 * 60 * 1e3
+        });
+        return res.json({
+          user: {
+            id: String(student.id),
+            email: student.email,
+            name: student.name,
+            role: "STUDENT",
+            studentId: student.id,
+            branch: student.branch,
+            cgpa: student.cgpa,
+            mustChangePassword: Boolean(student.mustChangePassword)
+          },
+          student: {
+            ...student,
+            mustChangePassword: Boolean(student.mustChangePassword)
+          }
         });
       }
-      const token = jwt2.sign(
-        { sub: `student-${student.id}`, role: "STUDENT", studentId: student.id },
-        env.JWT_SECRET,
-        { expiresIn: "8h" }
-      );
-      res.cookie("screening_token", token, {
-        httpOnly: true,
-        secure: env.NODE_ENV === "production",
-        sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-        maxAge: 8 * 60 * 60 * 1e3
-      });
-      return res.json({
-        user: {
-          id: String(student.id),
-          email: student.email,
-          name: student.name,
-          role: "STUDENT",
-          studentId: student.id,
-          branch: student.branch,
-          cgpa: student.cgpa,
-          mustChangePassword: Boolean(student.mustChangePassword)
-        },
-        student: {
-          ...student,
-          mustChangePassword: Boolean(student.mustChangePassword)
-        }
-      });
     }
-    return res.status(401).json({ error: "No account found matching this email address." });
+    return res.status(401).json({
+      error: "Invalid credentials. Please verify your registered email and password."
+    });
   } catch (error) {
     next(error);
   }
@@ -1208,21 +1159,12 @@ router.post("/change-password", async (req, res, next) => {
         ]
       }
     });
-    if (!student) {
+    if (!student || !student.passwordHash) {
       return res.status(404).json({ error: "Student account not found." });
     }
-    const firstName = (student.name || "").trim().split(" ")[0];
-    const defaultExpectedPassword = `${firstName}@2020`;
-    let isOldMatch = false;
-    if (student.passwordHash) {
-      isOldMatch = await bcrypt2.compare(oldPassword, student.passwordHash);
-    }
+    const isOldMatch = await bcrypt2.compare(oldPassword, student.passwordHash);
     if (!isOldMatch) {
-      const inputLower = oldPassword.toLowerCase().trim();
-      isOldMatch = oldPassword === defaultExpectedPassword || inputLower === defaultExpectedPassword.toLowerCase() || inputLower === "name@2020" || oldPassword === "Student@2026!" || oldPassword === String(student.externalId);
-    }
-    if (!isOldMatch) {
-      return res.status(400).json({ error: "Current / Temporary password is incorrect." });
+      return res.status(400).json({ error: "Current password is incorrect." });
     }
     const newHash = await bcrypt2.hash(newPassword.trim(), 10);
     await prisma.student.update({
@@ -1249,30 +1191,6 @@ If you did not make this change, please report to your Placement Coordinator imm
       success: true,
       message: "Password changed successfully! You can now use your new password.",
       mustChangePassword: false
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-router.get("/demo-accounts", async (_req, res, next) => {
-  try {
-    const students = await prisma.student.findMany({ take: 6 });
-    res.json({
-      admin: {
-        email: "admin@placement.edu",
-        password: "Admin@Placement2026!",
-        name: "Placement Officer",
-        role: "ADMIN"
-      },
-      students: students.map((s) => ({
-        id: s.id,
-        name: s.name,
-        email: s.email,
-        branch: s.branch,
-        cgpa: s.cgpa,
-        password: "Student@2026!",
-        role: "STUDENT"
-      }))
     });
   } catch (error) {
     next(error);
