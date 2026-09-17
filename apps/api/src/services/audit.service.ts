@@ -1,0 +1,1 @@
+import {prisma} from '../db.js';export async function audit(userId:string|undefined,action:string,entity:string,entityId?:string,metadata?:Record<string,unknown>){await prisma.auditLog.create({data:{userId,action,entity,entityId,metadata}});}

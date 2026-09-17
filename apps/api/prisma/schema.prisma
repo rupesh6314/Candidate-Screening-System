@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  COORDINATOR
+  ADMIN
+  STUDENT
+}
+
+enum Category {
+  STRONG
+  AVERAGE
+  NEEDS_IMPROVEMENT
+}
+
+enum JobType {
+  FULL_TIME
+  INTERNSHIP
+  INTERNSHIP_PPO
+}
+
+enum ApplicationStatus {
+  OPTED_IN
+  OPTED_OUT
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  role         Role       @default(COORDINATOR)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+}
+
+model Student {
+  id                     Int                  @id @default(autoincrement())
+  externalId             String               @unique
+  name                   String
+  email                  String               @unique
+  phone                  String?
+  branch                 String
+  cgpa                   Decimal              @db.Decimal(4, 2)
+  skills                 String[]
+  projects               String[]
+  internships            String[]
+  certifications         String[]
+  score                  Int                  @default(0)
+  category               Category             @default(NEEDS_IMPROVEMENT)
+  isOverridden           Boolean              @default(false)
+  overrideCategory       Category?
+  overrideReason         String?
+  overriddenBy           String?
+  overriddenAt           DateTime?
+  isReviewed             Boolean              @default(false)
+  passwordHash           String?
+  mustChangePassword     Boolean              @default(false)
+  profileImage           String?
+  resumeUrl              String?
+  bio                    String?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  applications           DriveApplication[]
+  notifications          StudentNotification[]
+}
+
+model CompanyDrive {
+  id               String               @id @default(cuid())
+  companyName      String
+  logoUrl          String?
+  role             String
+  jobType          JobType              @default(FULL_TIME)
+  ctc              String
+  stipend          String?
+  location         String
+  minCgpa          Decimal              @db.Decimal(4, 2)
+  allowedBranches  String[]
+  requiredSkills   String[]
+  description      String
+  selectionProcess String[]
+  serviceAgreement String               @default("None")
+  startDate        DateTime             @default(now())
+  deadline         DateTime
+  isActive         Boolean              @default(true)
+  createdBy        String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  applications     DriveApplication[]
+  notifications    StudentNotification[]
+}
+
+model DriveApplication {
+  id                          String            @id @default(cuid())
+  driveId                     String
+  studentId                   Int
+  status                      ApplicationStatus @default(OPTED_IN)
+  responseAt                  DateTime          @default(now())
+  isShortlistedByCoordinator  Boolean           @default(false)
+  coordinatorNotes            String?
+  sharedWithCompanyAt         DateTime?
+  createdAt                   DateTime          @default(now())
+  updatedAt                   DateTime          @updatedAt
+  student                     Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  drive                       CompanyDrive      @relation(fields: [driveId], references: [id], onDelete: Cascade)
+
+  @@unique([driveId, studentId])
+}
+
+model StudentNotification {
+  id          String        @id @default(cuid())
+  studentId   Int
+  studentEmail String
+  driveId     String?
+  companyName String?
+  subject     String
+  message     String
+  minCgpa     Decimal?      @db.Decimal(4, 2)
+  deadline    DateTime?
+  isRead      Boolean       @default(false)
+  sentAt      DateTime      @default(now())
+  student     Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  drive       CompanyDrive? @relation(fields: [driveId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([sentAt])
+}
+
+model CategorizationRule {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  enabled     Boolean  @default(true)
+  config      Json
+  version     Int      @default(1)
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

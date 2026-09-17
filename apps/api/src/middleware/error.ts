@@ -1,0 +1,1 @@
+import type {ErrorRequestHandler} from 'express';import {ZodError} from 'zod';export const errorHandler:ErrorRequestHandler=(e,_q,res,_n)=>{if(e instanceof ZodError)return res.status(400).json({error:'Validation failed',details:e.issues});console.error(e);return res.status(500).json({error:'Internal server error'});};

@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: screening
+      POSTGRES_USER: screening
+      POSTGRES_PASSWORD: screening_dev_only
+    ports: ["5432:5432"]
+    volumes: [screening_pgdata:/var/lib/postgresql/data]
+volumes:
+  screening_pgdata:

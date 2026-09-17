@@ -1,0 +1,16 @@
+ID,Name,Email,Phone,Branch,CGPA,Skills,Projects,Internships,Certifications
+1,Aarav Gupta,aarav.g@gmail.com,9876543210,Computer Science,9.3,"MERN, AWS, Next.js","E-commerce Web App, Chat Application",SDE Intern at Amazon,"AWS Cloud Practitioner, Meta Front-End Developer"
+2,Ishita Verma,ishita.v21@gmail.com,8765432109,Information Technology,8.9,"React, Node.js, MongoDB",Task Management System,Frontend Intern at TCS,Google UX Design
+3,Rohan Nair,rnair.dev@gmail.com,7654321098,Computer Science,9.1,"Python, Django, React","Social Media Dashboard, Portfolio App",Web Dev Intern at Infosys,IBM Full Stack Software Developer
+4,Megha Sharma,megha.sharma99@gmail.com,6543210987,Software Engineering,8.5,"Java, Spring Boot, React",Inventory Management System,Java Developer Intern at Wipro,Oracle Certified Associate
+5,Karthik Reddy,karthik.r@gmail.com,9012345678,Computer Science,8.2,"JavaScript, Express, SQL","Weather App, Blog Platform",Software Intern at Tech Mahindra,HackerRank JavaScript (Basic)
+6,Sneha Desai,snehad.22@gmail.com,8123456790,Electronics,7.6,"HTML, CSS, JavaScript",Personal Website,None,None
+7,Aditya Kumar,aditya.k45@gmail.com,9123456781,Mechanical,7.1,"Python, SQL",Data Analysis on Sales Data,None,Google Data Analytics
+8,Neha Singh,nehasingh.01@gmail.com,7123456789,Information Technology,7.8,"Java, HTML, CSS",Library Management System,Trainee at WebX,None
+9,Vivek Joshi,vivek.j@gmail.com,8234567890,Computer Science,6.9,"C++, HTML",Calculator App,None,None
+10,Pooja Patel,poojap.tech@gmail.com,9345678901,Civil,7.4,"Python, Excel",Student Database System,None,None
+11,Amit Chawla,amit.c00@gmail.com,9456789012,Civil,5.9,MS Word,None,None,None
+12,Suman Rao,suman.rao1@gmail.com,8567890123,Mechanical,6.1,"Windows, Data Entry",Basic HTML Page,None,None
+13,Deepak Tiwari,deepakt.77@gmail.com,7678901234,Electronics,5.4,MS Excel,None,None,None
+14,Meera Reddy,meera.r3@gmail.com,9789012345,Chemical,6.3,Basic Computer,None,None,None
+15,Rajeev Menon,rajeev.m9@gmail.com,8890123456,Mechanical,5.2,MS Office,None,None,None
