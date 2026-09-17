@@ -1720,21 +1720,28 @@ var __filename2 = fileURLToPath2(import.meta.url);
 var __dirname2 = path2.dirname(__filename2);
 var DATA_DIR2 = path2.resolve(__dirname2, "../../data");
 var RULES_FILE = path2.join(DATA_DIR2, "rules.json");
+var cachedRules = null;
 function ensureDataDir() {
-  if (!fs2.existsSync(DATA_DIR2)) {
-    fs2.mkdirSync(DATA_DIR2, { recursive: true });
+  try {
+    if (!fs2.existsSync(DATA_DIR2)) {
+      fs2.mkdirSync(DATA_DIR2, { recursive: true });
+    }
+  } catch (_) {
   }
 }
 function getActiveRuleset() {
+  if (cachedRules) return cachedRules;
   ensureDataDir();
-  if (fs2.existsSync(RULES_FILE)) {
-    try {
+  try {
+    if (fs2.existsSync(RULES_FILE)) {
       const data = JSON.parse(fs2.readFileSync(RULES_FILE, "utf8"));
-      return { ...DEFAULT_RULES, ...data };
-    } catch (_) {
+      cachedRules = { ...DEFAULT_RULES, ...data };
+      return cachedRules;
     }
+  } catch (_) {
   }
-  return { ...DEFAULT_RULES };
+  cachedRules = { ...DEFAULT_RULES };
+  return cachedRules;
 }
 async function saveRuleset(newRules, userId) {
   ensureDataDir();
@@ -1753,22 +1760,36 @@ async function saveRuleset(newRules, userId) {
     averageThreshold: Number(newRules.averageThreshold ?? current.averageThreshold),
     nonTechnicalSkills: newRules.nonTechnicalSkills ?? current.nonTechnicalSkills
   };
-  fs2.writeFileSync(RULES_FILE, JSON.stringify(updated, null, 2), "utf8");
+  cachedRules = updated;
+  try {
+    fs2.writeFileSync(RULES_FILE, JSON.stringify(updated, null, 2), "utf8");
+  } catch (_) {
+  }
   if (userId) {
-    await audit(userId, "UPDATE_RULES", "RULES", updated.id, {
-      version: updated.version,
-      strongThreshold: updated.strongThreshold,
-      averageThreshold: updated.averageThreshold
-    });
+    try {
+      await audit(userId, "UPDATE_RULES", "RULES", updated.id, {
+        version: updated.version,
+        strongThreshold: updated.strongThreshold,
+        averageThreshold: updated.averageThreshold
+      });
+    } catch (_) {
+    }
   }
   return updated;
 }
 async function resetRulesetToDefault(userId) {
   ensureDataDir();
   const reset = { ...DEFAULT_RULES, version: (getActiveRuleset().version || 1) + 1 };
-  fs2.writeFileSync(RULES_FILE, JSON.stringify(reset, null, 2), "utf8");
+  cachedRules = reset;
+  try {
+    fs2.writeFileSync(RULES_FILE, JSON.stringify(reset, null, 2), "utf8");
+  } catch (_) {
+  }
   if (userId) {
-    await audit(userId, "RESET_RULES", "RULES", reset.id);
+    try {
+      await audit(userId, "RESET_RULES", "RULES", reset.id);
+    } catch (_) {
+    }
   }
   return reset;
 }

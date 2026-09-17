@@ -29,15 +29,24 @@ import { CompanyDrivesListModal } from './components/CompanyDrivesListModal';
 import { LoginView } from './components/LoginView';
 
 export default function App() {
-  // Authentication State: Default to null or load from session
-  const [currentUser, setCurrentUser] = useState<User | null>({
-    id: 'coord-1',
-    name: 'Placement Officer',
-    email: 'admin@placement.edu',
-    role: 'COORDINATOR',
+  // Authentication State: Default to null so Login View is always displayed first
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    try {
+      const saved = localStorage.getItem('screening_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
+  const [currentStudent, setCurrentStudent] = useState<Student | null>(() => {
+    try {
+      const saved = localStorage.getItem('screening_student');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const [students, setStudents] = useState<Student[]>([]);
   const [drives, setDrives] = useState<CompanyDrive[]>([]);
@@ -119,7 +128,7 @@ export default function App() {
     sortOrder,
   ]);
 
-  // Fetch data
+  // Fetch Core Candidate and Dashboard Data
   const fetchData = useCallback(async () => {
     if (!currentUser) return;
     setLoading(true);
@@ -143,7 +152,9 @@ export default function App() {
       }
 
       if (currentUser.role === 'STUDENT' && !currentStudent) {
-        const matchingStudent = fetchedStudents.find((s: Student) => s.id === Number(currentUser.id) || s.email.toLowerCase() === currentUser.email.toLowerCase());
+        const matchingStudent = fetchedStudents.find(
+          (s: Student) => s.id === Number(currentUser.id) || s.email.toLowerCase() === currentUser.email.toLowerCase()
+        );
         if (matchingStudent) {
           setCurrentStudent(matchingStudent);
         }
@@ -156,8 +167,10 @@ export default function App() {
   }, [buildQueryParams, currentUser, currentStudent]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (currentUser) {
+      fetchData();
+    }
+  }, [fetchData, currentUser]);
 
   // Login handler
   const handleLoginSuccess = (authUser: any, authStudent?: Student) => {
@@ -168,13 +181,28 @@ export default function App() {
       role: authUser.role === 'STUDENT' ? ('STUDENT' as any) : 'COORDINATOR',
     };
     setCurrentUser(formattedUser);
+    try {
+      localStorage.setItem('screening_user', JSON.stringify(formattedUser));
+    } catch (_) {}
 
     if (authUser.role === 'STUDENT') {
-      const st = authStudent || students.find((s) => s.id === Number(authUser.id) || s.email.toLowerCase() === authUser.email.toLowerCase());
-      if (st) setCurrentStudent(st);
+      const st =
+        authStudent ||
+        students.find(
+          (s) => s.id === Number(authUser.id) || s.email.toLowerCase() === authUser.email.toLowerCase()
+        );
+      if (st) {
+        setCurrentStudent(st);
+        try {
+          localStorage.setItem('screening_student', JSON.stringify(st));
+        } catch (_) {}
+      }
       showToast(`Welcome ${authUser.name}! Logged in to your Student Placement Portal.`, 'success');
     } else {
       setCurrentStudent(null);
+      try {
+        localStorage.removeItem('screening_student');
+      } catch (_) {}
       showToast(`Welcome ${authUser.name}! Logged in to Placement Coordinator Dashboard.`, 'success');
     }
   };
@@ -186,6 +214,10 @@ export default function App() {
     } finally {
       setCurrentUser(null);
       setCurrentStudent(null);
+      try {
+        localStorage.removeItem('screening_user');
+        localStorage.removeItem('screening_student');
+      } catch (_) {}
       showToast('You have been signed out successfully.', 'info');
     }
   };
