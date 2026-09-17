@@ -408,25 +408,24 @@ interface LocalDatabase {
   notifications: Array<any>;
 }
 
-function loadLocalData(): LocalDatabase {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+let memoryDb: LocalDatabase | null = null;
 
+function loadLocalData(): LocalDatabase {
+  if (memoryDb) return memoryDb;
   let db: LocalDatabase | null = null;
-  if (fs.existsSync(DATA_FILE)) {
-    try {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
       db = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-    } catch (_) {}
-  }
+    }
+  } catch (_) {}
 
   if (!db) {
     db = {
       users: [
         {
           id: 'cuid-admin-1',
-          email: 'admin@placement.edu',
-          passwordHash: bcrypt.hashSync('Admin@Placement2026!', 10),
+          email: 'admin.placementscollege@gmail.com',
+          passwordHash: bcrypt.hashSync('admin', 10),
           name: 'Placement Officer',
           role: 'ADMIN',
           createdAt: new Date().toISOString(),
@@ -449,6 +448,7 @@ function loadLocalData(): LocalDatabase {
       notifications: [],
     };
     saveLocalData(db);
+    memoryDb = db;
     return db;
   }
 
@@ -464,7 +464,7 @@ function loadLocalData(): LocalDatabase {
   }
   // Ensure students have passwordHash, mustChangePassword, profileImage, and resumeUrl
   let modified = false;
-  db.students = db.students.map((s) => {
+  db.students = (db.students || []).map((s) => {
     let changed = false;
     const defaultPass = getStudentDefaultPassword(s.name);
     const passwordHash = s.passwordHash || bcrypt.hashSync(defaultPass, 10);
@@ -494,14 +494,20 @@ function loadLocalData(): LocalDatabase {
     saveLocalData(db);
   }
 
+  memoryDb = db;
   return db;
 }
 
 function saveLocalData(db: LocalDatabase) {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  memoryDb = db;
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2), 'utf8');
+  } catch (_) {
+    // Read-only filesystem in serverless environments
   }
-  fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2), 'utf8');
 }
 
 // Local Database Adapter providing Prisma API
@@ -943,26 +949,15 @@ if (rawPrisma) {
 
 export const prisma = new Proxy({} as any, {
   get(_target, prop) {
-    if (useFallback || !rawPrisma) {
-      return (localDb as any)[prop];
+    if (!useFallback && rawPrisma) {
+      const real = (rawPrisma as any)[prop];
+      if (real !== undefined) {
+        return real;
+      }
     }
-    const real = (rawPrisma as any)[prop];
-    if (typeof real === 'function') {
-      return async (...args: any[]) => {
-        try {
-          return await real.apply(rawPrisma, args);
-        } catch (err: any) {
-          if (!useFallback && (err.code === 'P1001' || err.message?.includes('Can\'t reach database'))) {
-            console.warn('⚠️ PostgreSQL unreachable. Switching to embedded local database.');
-            useFallback = true;
-            return (localDb as any)[prop](...args);
-          }
-          throw err;
-        }
-      };
-    }
-    return (localDb as any)[prop] || real;
+    return (localDb as any)[prop];
   },
 });
+
 
 

@@ -415,24 +415,23 @@ function getStudentDefaultPassword(name) {
   const firstName = name.trim().split(" ")[0];
   return `${firstName}@2020`;
 }
+var memoryDb = null;
 function loadLocalData() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+  if (memoryDb) return memoryDb;
   let db = null;
-  if (fs.existsSync(DATA_FILE)) {
-    try {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
       db = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-    } catch (_) {
     }
+  } catch (_) {
   }
   if (!db) {
     db = {
       users: [
         {
           id: "cuid-admin-1",
-          email: "admin@placement.edu",
-          passwordHash: bcrypt.hashSync("Admin@Placement2026!", 10),
+          email: "admin.placementscollege@gmail.com",
+          passwordHash: bcrypt.hashSync("admin", 10),
           name: "Placement Officer",
           role: "ADMIN",
           createdAt: (/* @__PURE__ */ new Date()).toISOString(),
@@ -455,6 +454,7 @@ function loadLocalData() {
       notifications: []
     };
     saveLocalData(db);
+    memoryDb = db;
     return db;
   }
   if (!db.companyDrives || db.companyDrives.length === 0) {
@@ -467,7 +467,7 @@ function loadLocalData() {
     db.notifications = [];
   }
   let modified = false;
-  db.students = db.students.map((s) => {
+  db.students = (db.students || []).map((s) => {
     let changed = false;
     const defaultPass = getStudentDefaultPassword(s.name);
     const passwordHash = s.passwordHash || bcrypt.hashSync(defaultPass, 10);
@@ -495,13 +495,18 @@ function loadLocalData() {
   if (modified) {
     saveLocalData(db);
   }
+  memoryDb = db;
   return db;
 }
 function saveLocalData(db) {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  memoryDb = db;
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2), "utf8");
+  } catch (_) {
   }
-  fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2), "utf8");
 }
 var localDb = {
   user: {
@@ -912,25 +917,13 @@ if (rawPrisma) {
 }
 var prisma = new Proxy({}, {
   get(_target, prop) {
-    if (useFallback || !rawPrisma) {
-      return localDb[prop];
+    if (!useFallback && rawPrisma) {
+      const real = rawPrisma[prop];
+      if (real !== void 0) {
+        return real;
+      }
     }
-    const real = rawPrisma[prop];
-    if (typeof real === "function") {
-      return async (...args) => {
-        try {
-          return await real.apply(rawPrisma, args);
-        } catch (err) {
-          if (!useFallback && (err.code === "P1001" || err.message?.includes("Can't reach database"))) {
-            console.warn("\u26A0\uFE0F PostgreSQL unreachable. Switching to embedded local database.");
-            useFallback = true;
-            return localDb[prop](...args);
-          }
-          throw err;
-        }
-      };
-    }
-    return localDb[prop] || real;
+    return localDb[prop];
   }
 });
 
