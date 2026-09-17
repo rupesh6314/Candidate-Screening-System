@@ -33,8 +33,12 @@ export default app;
   fs.writeFileSync(path.join(rootDist, filename), rootEntryContent);
 });
 
+// Ensure both dist directories are perfectly synchronized
+if (fs.existsSync(rootDist)) {
+  fs.cpSync(rootDist, webDist, { recursive: true });
+}
 if (fs.existsSync(webDist)) {
   fs.cpSync(webDist, rootDist, { recursive: true });
 }
 
-console.log('✅ Postbuild: Vercel static & serverless entrypoint bridges created successfully.');
+console.log('✅ Postbuild: Both ./dist and ./apps/web/dist contain production build and entrypoints.');
