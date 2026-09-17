@@ -237,21 +237,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="features-menu-item"
                       onClick={() => {
                         setIsFeaturesOpen(false);
-                        onOpenEmailConfigModal?.();
-                      }}
-                    >
-                      <KeyRound size={15} />
-                      <div className="menu-item-text">
-                        <strong>Email & SMTP Settings</strong>
-                        <span>Configure Gmail App Password or SMTP credentials for real emails</span>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="features-menu-item"
-                      onClick={() => {
-                        setIsFeaturesOpen(false);
                         onOpenImportModal();
                       }}
                     >

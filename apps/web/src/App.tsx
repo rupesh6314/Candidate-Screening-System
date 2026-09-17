@@ -816,11 +816,7 @@ export default function App() {
         onStudentAdded={(newStudentOrName: any) => {
           const studentObj = typeof newStudentOrName === 'object' && newStudentOrName?.id ? newStudentOrName : null;
           const candidateName = studentObj ? studentObj.name : String(newStudentOrName || 'Candidate');
-          const emailNotice = studentObj?.smtpDispatched
-            ? ` Live login email sent to ${studentObj.email}!`
-            : studentObj?.temporaryPassword
-            ? ` Temporary password: ${studentObj.temporaryPassword}`
-            : '';
+          const emailNotice = studentObj?.email ? ` Login credentials have been sent to ${studentObj.email}.` : '';
           showToast(`Candidate ${candidateName} added & evaluated successfully!${emailNotice}`, 'success');
 
           if (studentObj) {

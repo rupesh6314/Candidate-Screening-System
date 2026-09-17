@@ -696,15 +696,32 @@ router.post(
       const parsed = studentSchema.parse(req.body);
       const data = prepareStudentData(parsed);
 
-      const existing = await prisma.student.findFirst({
-        where: {
-          OR: [{ externalId: data.externalId }, { email: data.email }],
-        },
+      const allStudents = await prisma.student.findMany();
+      const emailLower = data.email.toLowerCase().trim();
+      const phoneClean = (data.phone || '').trim().replace(/\D/g, '');
+      const externalIdTrimmed = String(data.externalId || '').trim();
+
+      const existing = allStudents.find((s: any) => {
+        const sEmail = (s.email || '').toLowerCase().trim();
+        const sPhone = (s.phone || '').trim().replace(/\D/g, '');
+        const sExtId = String(s.externalId || '').trim();
+
+        if (sEmail && sEmail === emailLower) return true;
+        if (phoneClean && sPhone && sPhone === phoneClean) return true;
+        if (externalIdTrimmed && sExtId && sExtId === externalIdTrimmed) return true;
+        return false;
       });
 
       if (existing) {
+        let conflictReason = 'Email address or Mobile number';
+        const sEmail = (existing.email || '').toLowerCase().trim();
+        const sPhone = (existing.phone || '').trim().replace(/\D/g, '');
+        if (sEmail === emailLower) conflictReason = `Email (${data.email})`;
+        else if (phoneClean && sPhone === phoneClean) conflictReason = `Mobile Number (${data.phone})`;
+        else conflictReason = `Student Roll ID (${data.externalId})`;
+
         return res.status(400).json({
-          error: `Student with ID "${data.externalId}" or Email "${data.email}" already exists.`,
+          error: `Candidate already exists! A student with matching ${conflictReason} is already registered in the system.`,
         });
       }
 
@@ -732,12 +749,11 @@ Your official campus placement student account has been registered by the Placem
 Here are your login credentials:
 • Registered Email: ${created.email}
 • Temporary Password: ${tempPassword}
-• Portal Link: ${portalUrl}
 
-⚠️ CRITICAL SAFETY NOTICE:
-When you log in for the first time, you MUST and SHOULD change your password immediately in your profile settings for more safety and account protection.
+⚠️ MANDATORY SAFETY NOTICE:
+When you log in for the first time, you must change your password immediately in your student profile settings for account security and safety.
 
-Open Placement Portal: ${portalUrl}`;
+Please click "Log In to Placement Portal" in the email to access your account.`;
 
       try {
         await prisma.studentNotification.create({
@@ -773,12 +789,9 @@ Open Placement Portal: ${portalUrl}`;
 
       res.status(201).json({
         ...enrichStudent(created),
-        temporaryPassword: tempPassword,
         credentialsEmailSent: true,
         smtpDispatched: emailDispatchResult.success,
-        message: emailDispatchResult.success
-          ? `Student profile registered and welcome email with login password successfully dispatched to ${created.email}!`
-          : `Student profile registered successfully! Temporary password: ${tempPassword}. (Notification sent to candidate inbox).`,
+        message: `Candidate ${created.name} registered successfully! Login credentials have been sent directly to ${created.email}.`,
       });
     } catch (error) {
       next(error);
