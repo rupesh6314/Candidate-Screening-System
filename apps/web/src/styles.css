@@ -4400,11 +4400,18 @@ button {
   color: #047857;
 }
 
-.btn-row-opt-in:hover,
-.btn-row-opt-in.active {
-  background: #059669;
+.btn-row-opt-in:hover {
+  background: #10b981;
   border-color: #059669;
   color: #ffffff;
+}
+
+.btn-row-opt-in.active {
+  background: #059669 !important;
+  border-color: #047857 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.4), 0 2px 4px rgba(0, 0, 0, 0.12);
+  font-weight: 800;
 }
 
 .btn-row-opt-out {
@@ -4413,11 +4420,18 @@ button {
   color: #be123c;
 }
 
-.btn-row-opt-out:hover,
-.btn-row-opt-out.active {
-  background: #e11d48;
+.btn-row-opt-out:hover {
+  background: #f43f5e;
   border-color: #e11d48;
   color: #ffffff;
+}
+
+.btn-row-opt-out.active {
+  background: #e11d48 !important;
+  border-color: #be123c !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.4), 0 2px 4px rgba(0, 0, 0, 0.12);
+  font-weight: 800;
 }
 
 .drive-row-arrow {
@@ -4666,13 +4680,23 @@ button {
 }
 
 .btn-opt-in {
-  background: #059669;
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #047857;
+}
+
+.btn-opt-in:hover {
+  background: #10b981;
   border-color: #059669;
   color: #ffffff;
 }
 
-.btn-opt-in:hover {
-  background: #047857;
+.btn-opt-in.active {
+  background: #059669 !important;
+  border-color: #047857 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 2px 4px rgba(0, 0, 0, 0.15);
+  font-weight: 800;
 }
 
 .btn-opt-out {
@@ -4682,8 +4706,17 @@ button {
 }
 
 .btn-opt-out:hover {
-  background: #e11d48;
+  background: #f43f5e;
+  border-color: #e11d48;
   color: #ffffff;
+}
+
+.btn-opt-out.active {
+  background: #e11d48 !important;
+  border-color: #be123c !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.4), 0 2px 4px rgba(0, 0, 0, 0.15);
+  font-weight: 800;
 }
 
 /* 5. Admin Drives Grid & Applicant Desk */

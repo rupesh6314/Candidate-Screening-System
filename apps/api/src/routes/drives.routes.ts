@@ -490,10 +490,7 @@ router.post('/student/:studentId/respond', async (req: Request, res: Response): 
 
     res.json({
       success: true,
-      message:
-        status === 'OPTED_IN'
-          ? `🎉 You have successfully Opted-In for ${drive.companyName} (${drive.role}). Your profile & verified resume link have been submitted to the placement coordinator.`
-          : `You have Opted-Out of the ${drive.companyName} recruitment drive.`,
+      message: status === 'OPTED_IN' ? 'Opted In Successfully' : 'Opted Out Successfully',
       application,
     });
   } catch (error: any) {
@@ -538,10 +535,17 @@ router.get('/student/:studentId/notifications', async (req: Request, res: Respon
       res.json({ notifications: [] });
       return;
     }
-    const notifications = await prisma.notification.findMany({
-      where: { studentId: student.id },
+    const notifModel = (prisma as any).studentNotification || (prisma as any).notification;
+    const notifications = await notifModel.findMany({
+      where: {
+        OR: [
+          { studentId: student.id },
+          { studentEmail: student.email.toLowerCase() },
+        ],
+      },
+      orderBy: { sentAt: 'desc' },
     });
-    res.json({ notifications });
+    res.json({ notifications: notifications || [] });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Failed to fetch notifications' });
   }

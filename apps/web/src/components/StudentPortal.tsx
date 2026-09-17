@@ -84,26 +84,50 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
 
   const handleRespond = async (driveId: string, status: 'OPTED_IN' | 'OPTED_OUT') => {
     setRespondingDriveId(driveId);
-    try {
-      const res = await submitStudentDriveResponse(currentStudent.id, driveId, status);
-      onNotify(res.message, status === 'OPTED_IN' ? 'success' : 'info');
-      await loadStudentData();
-      if (selectedDrive && selectedDrive.id === driveId) {
-        setSelectedDrive((prev) =>
-          prev
+    // Optimistically update local drive list so the clicked button immediately highlights
+    setFeeds((prev) => {
+      const updateList = (list: CompanyDrive[]) =>
+        list.map((d) =>
+          d.id === driveId
             ? {
-                ...prev,
+                ...d,
                 studentResponse: {
                   status,
                   responseAt: new Date().toISOString(),
-                  isShortlisted: false,
+                  isShortlisted: d.studentResponse?.isShortlisted || false,
                 },
               }
-            : null
+            : d
         );
-      }
+      return {
+        active: updateList(prev.active),
+        notOptedIn: updateList(prev.notOptedIn),
+        all: updateList(prev.all),
+      };
+    });
+
+    if (selectedDrive && selectedDrive.id === driveId) {
+      setSelectedDrive((prev) =>
+        prev
+          ? {
+              ...prev,
+              studentResponse: {
+                status,
+                responseAt: new Date().toISOString(),
+                isShortlisted: prev.studentResponse?.isShortlisted || false,
+              },
+            }
+          : null
+      );
+    }
+
+    try {
+      const res = await submitStudentDriveResponse(currentStudent.id, driveId, status);
+      onNotify(res.message || (status === 'OPTED_IN' ? 'Opted In Successfully' : 'Opted Out Successfully'), status === 'OPTED_IN' ? 'success' : 'info');
+      await loadStudentData();
     } catch (err: any) {
       onNotify(err.response?.data?.error || 'Failed to submit response', 'error');
+      await loadStudentData();
     } finally {
       setRespondingDriveId(null);
     }
@@ -263,25 +287,27 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                   </div>
                   <div className="notif-dropdown-list">
                     {notifications.length === 0 ? (
-                      <div className="notif-empty">
-                        <p>No placement alerts yet.</p>
+                      <div className="notif-empty" style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>
+                        <p style={{ margin: 0, fontSize: '13px' }}>No placement alerts yet.</p>
                       </div>
                     ) : (
-                      notifications.map((n) => (
-                        <div key={n.id} className="notif-item">
+                      notifications.map((n, idx) => (
+                        <div key={n.id || `notif-${idx}`} className="notif-item">
                           <div className="notif-item-header">
-                            <span className="notif-company">{n.companyName}</span>
+                            <span className="notif-company">{n.companyName || 'Campus Placement Cell'}</span>
                             <span className="notif-time">
-                              {new Date(n.sentAt).toLocaleDateString('en-IN', {
-                                day: '2-digit',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                              {n.sentAt
+                                ? new Date(n.sentAt).toLocaleDateString('en-IN', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })
+                                : 'Recent'}
                             </span>
                           </div>
                           <h5 className="notif-subject">{n.subject}</h5>
-                          <p className="notif-body">{n.message}</p>
+                          <p className="notif-body" style={{ whiteSpace: 'pre-line', margin: '4px 0 0 0', lineHeight: 1.45 }}>{n.message}</p>
                         </div>
                       ))
                     )}
@@ -483,22 +509,28 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
 
                     {/* Quick Opt-In / Opt-Out Action Buttons */}
                     {!isExpired && (
-                      <div className="drive-quick-actions">
+                      <div className="drive-quick-actions" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           className={`btn-row-opt-out ${responseStatus === 'OPTED_OUT' ? 'active' : ''}`}
-                          onClick={() => handleRespond(drive.id, 'OPTED_OUT')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRespond(drive.id, 'OPTED_OUT');
+                          }}
                           disabled={isResponding}
                           title="Opt-out of this campus drive"
                         >
                           <XCircle size={14} />
-                          <span>Opt-out</span>
+                          <span>{responseStatus === 'OPTED_OUT' ? 'Opted-Out' : 'Opt-out'}</span>
                         </button>
 
                         <button
                           type="button"
                           className={`btn-row-opt-in ${responseStatus === 'OPTED_IN' ? 'active' : ''}`}
-                          onClick={() => handleRespond(drive.id, 'OPTED_IN')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRespond(drive.id, 'OPTED_IN');
+                          }}
                           disabled={isResponding}
                           title="Opt-in and submit your profile & resume to placement coordinator"
                         >
