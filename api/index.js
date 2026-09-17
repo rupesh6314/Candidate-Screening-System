@@ -1966,18 +1966,18 @@ async function sendEmail({ to, subject, text, html }) {
         html: html || `<div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">${text.replace(/\n/g, "<br/>")}</div>`
       });
       const timeoutPromise = new Promise(
-        (_, reject) => setTimeout(() => reject(new Error("SMTP Connection timed out after 8000ms")), 8e3)
+        (_, reject) => setTimeout(() => reject(new Error("SMTP connection timed out after 8000ms")), 8e3)
       );
       const info = await Promise.race([sendPromise, timeoutPromise]);
       console.log(`\u{1F4E7} [LIVE SMTP] Outgoing Email Dispatched to ${to}: "${subject}" (MessageID: ${info.messageId})`);
       return { success: true, messageId: info.messageId, simulated: false };
     } catch (error) {
       console.warn(`\u26A0\uFE0F SMTP delivery to ${to} deferred or failed (${error.message}). Message recorded in student in-app inbox.`);
-      return { success: false, messageId: `fallback-${Date.now()}`, simulated: true };
+      return { success: false, messageId: `fallback-${Date.now()}`, simulated: true, error: error.message };
     }
   } else {
     console.log(`\u{1F4EC} [In-App Notification Dispatcher] To: ${to} | Subject: "${subject}" (In-App notifications active)`);
-    return { success: true, messageId: `simulated-${Date.now()}`, simulated: true };
+    return { success: true, messageId: `simulated-${Date.now()}`, simulated: true, error: "No SMTP credentials configured." };
   }
 }
 function getWelcomeEmailHtml(name, email, tempPassword) {
@@ -3362,7 +3362,6 @@ var audit_routes_default = router6;
 
 // apps/api/src/routes/email.routes.ts
 import { Router as Router7 } from "express";
-import { z as z7 } from "zod";
 var router7 = Router7();
 router7.get("/status", requireAuth, (_req, res) => {
   const status = getEmailConfigStatus();
@@ -3372,25 +3371,36 @@ router7.post(
   "/config",
   requireAuth,
   requireRole("ADMIN", "COORDINATOR"),
-  async (req, res, next) => {
+  async (req, res) => {
     try {
-      const schema = z7.object({
-        host: z7.string().optional(),
-        port: z7.coerce.number().optional(),
-        user: z7.string().min(1, "Email address is required"),
-        pass: z7.string().min(1, "Password / App Password is required"),
-        fromName: z7.string().optional(),
-        fromEmail: z7.string().email().optional()
+      const body = req.body || {};
+      const user = String(body.user || "").trim();
+      const pass = String(body.pass || "").trim();
+      if (!user) {
+        return res.status(400).json({ error: "SMTP Username / Sender Email address is required." });
+      }
+      if (!pass) {
+        return res.status(400).json({ error: "SMTP Password / Google App Password is required." });
+      }
+      const host = body.host ? String(body.host).trim() : "smtp.gmail.com";
+      const port = body.port ? Number(body.port) : 465;
+      const fromName = body.fromName ? String(body.fromName).trim() : "Campus Placement Cell";
+      const fromEmail = body.fromEmail && String(body.fromEmail).trim().includes("@") ? String(body.fromEmail).trim() : user;
+      saveEmailConfig({
+        host,
+        port,
+        user,
+        pass: pass.replace(/\s+/g, ""),
+        fromName,
+        fromEmail
       });
-      const parsed = schema.parse(req.body);
-      saveEmailConfig(parsed);
-      res.json({
+      return res.json({
         success: true,
         message: "SMTP Email Configuration saved successfully!",
         status: getEmailConfigStatus()
       });
     } catch (error) {
-      next(error);
+      return res.status(400).json({ error: error.message || "Failed to save SMTP configuration." });
     }
   }
 );
@@ -3398,12 +3408,20 @@ router7.post(
   "/test",
   requireAuth,
   requireRole("ADMIN", "COORDINATOR"),
-  async (req, res, next) => {
+  async (req, res) => {
     try {
-      const schema = z7.object({
-        to: z7.string().email("Valid recipient email address is required")
-      });
-      const { to } = schema.parse(req.body);
+      const to = String(req.body?.to || "").trim();
+      if (!to || !to.includes("@")) {
+        return res.status(400).json({
+          error: "Please enter a valid recipient email address (e.g. name@domain.com) to test."
+        });
+      }
+      const status = getEmailConfigStatus();
+      if (!status.configured) {
+        return res.status(400).json({
+          error: 'SMTP credentials have not been configured yet. Please enter your email and App Password above, then click "Save SMTP Credentials" first.'
+        });
+      }
       const result = await sendEmail({
         to,
         subject: "\u{1F9EA} Campus Placement Portal - SMTP Email Delivery Test",
@@ -3412,17 +3430,16 @@ router7.post(
       });
       if (!result.success) {
         return res.status(400).json({
-          success: false,
-          error: "SMTP test failed. Please verify your email, SMTP host, and App Password (for Gmail, generate a 16-character Google App Password in Security settings)."
+          error: `SMTP Dispatch failed: ${result.error || "Authentication rejected"}. For Gmail, please make sure you generated a 16-character Google App Password in your Google Account Security settings (not your standard login password).`
         });
       }
-      res.json({
+      return res.json({
         success: true,
-        message: "Test email successfully dispatched to " + to + "! Check your inbox.",
+        message: `Test email successfully dispatched to ${to}! Check your inbox.`,
         details: result
       });
     } catch (error) {
-      next(error);
+      return res.status(400).json({ error: error.message || "Failed to dispatch test email." });
     }
   }
 );

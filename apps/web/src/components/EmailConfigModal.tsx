@@ -66,15 +66,23 @@ export const EmailConfigModal: React.FC<EmailConfigModalProps> = ({ isOpen, onCl
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user.trim()) {
+      setMessage({ text: 'Please enter your SMTP Username / Sender Email address.', type: 'error' });
+      return;
+    }
+    if (!pass.trim()) {
+      setMessage({ text: 'Please enter your SMTP / Google App Password (16-character code).', type: 'error' });
+      return;
+    }
     setSaving(true);
     setMessage(null);
     try {
       const payload = {
-        host: host || (provider === 'GMAIL' ? 'smtp.gmail.com' : undefined),
+        host: host || (provider === 'GMAIL' ? 'smtp.gmail.com' : 'smtp.office365.com'),
         port: Number(port) || (provider === 'GMAIL' ? 465 : 587),
         user: user.trim(),
         pass: pass.trim(),
-        fromName: fromName.trim(),
+        fromName: fromName.trim() || 'Campus Placement Cell',
         fromEmail: (fromEmail || user).trim(),
       };
       const res = await api.post('/api/email/config', payload);
@@ -88,8 +96,12 @@ export const EmailConfigModal: React.FC<EmailConfigModalProps> = ({ isOpen, onCl
   };
 
   const handleTestEmail = async () => {
-    if (!testEmail.trim()) {
-      setMessage({ text: 'Please enter a recipient email address to test.', type: 'error' });
+    if (!testEmail.trim() || !testEmail.includes('@')) {
+      setMessage({ text: 'Please enter a valid recipient email address (e.g. name@domain.com) to test.', type: 'error' });
+      return;
+    }
+    if (!status?.configured && (!user.trim() || !pass.trim())) {
+      setMessage({ text: 'Please enter your email and password above and click "Save SMTP Credentials" before sending a test.', type: 'error' });
       return;
     }
     setTesting(true);

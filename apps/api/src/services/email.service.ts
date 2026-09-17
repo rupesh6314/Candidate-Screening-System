@@ -92,7 +92,7 @@ export function getEmailConfigStatus(): { configured: boolean; user?: string; ho
   };
 }
 
-export async function sendEmail({ to, subject, text, html }: SendEmailParams): Promise<{ success: boolean; messageId?: string; simulated?: boolean }> {
+export async function sendEmail({ to, subject, text, html }: SendEmailParams): Promise<{ success: boolean; messageId?: string; simulated?: boolean; error?: string }> {
   const transporter = getTransporter();
   const custom = loadEmailConfig();
   const smtpUser = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || '';
@@ -111,7 +111,7 @@ export async function sendEmail({ to, subject, text, html }: SendEmailParams): P
       });
 
       const timeoutPromise = new Promise<{ messageId: string }>((_, reject) =>
-        setTimeout(() => reject(new Error('SMTP Connection timed out after 8000ms')), 8000)
+        setTimeout(() => reject(new Error('SMTP connection timed out after 8000ms')), 8000)
       );
 
       const info = (await Promise.race([sendPromise, timeoutPromise])) as any;
@@ -119,11 +119,11 @@ export async function sendEmail({ to, subject, text, html }: SendEmailParams): P
       return { success: true, messageId: info.messageId, simulated: false };
     } catch (error: any) {
       console.warn(`⚠️ SMTP delivery to ${to} deferred or failed (${error.message}). Message recorded in student in-app inbox.`);
-      return { success: false, messageId: `fallback-${Date.now()}`, simulated: true };
+      return { success: false, messageId: `fallback-${Date.now()}`, simulated: true, error: error.message };
     }
   } else {
     console.log(`📬 [In-App Notification Dispatcher] To: ${to} | Subject: "${subject}" (In-App notifications active)`);
-    return { success: true, messageId: `simulated-${Date.now()}`, simulated: true };
+    return { success: true, messageId: `simulated-${Date.now()}`, simulated: true, error: 'No SMTP credentials configured.' };
   }
 }
 
