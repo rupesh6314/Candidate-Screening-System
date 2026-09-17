@@ -146,12 +146,44 @@ export function getEmailConfigStatus(): { configured: boolean; user?: string; ho
 }
 
 export async function sendEmail({ to, subject, text, html }: SendEmailParams): Promise<{ success: boolean; messageId?: string; simulated?: boolean; error?: string }> {
-  const transporter = getTransporter();
   const custom = loadEmailConfig();
   const smtpUser = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || '';
   const fromName = custom?.fromName || 'Campus Placement Cell';
   const fromEmail = custom?.fromEmail || smtpUser || 'placements@campus.edu';
+  const resendKey = process.env.RESEND_API_KEY || '';
 
+  // 1. Check if Resend Cloud Email API is available (works 100% on Vercel without SMTP port blocking)
+  if (resendKey) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: `${fromName} <onboarding@resend.dev>`,
+          to: [to],
+          subject,
+          text,
+          html: html || `<div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">${text.replace(/\n/g, '<br/>')}</div>`,
+        }),
+      });
+
+      const resData = (await res.json()) as any;
+      if (res.ok && resData?.id) {
+        console.log(`📧 [RESEND API] Live Email Dispatched to ${to}: "${subject}" (ID: ${resData.id})`);
+        return { success: true, messageId: resData.id, simulated: false };
+      } else {
+        console.warn(`⚠️ Resend API returned error:`, resData);
+      }
+    } catch (resendErr: any) {
+      console.warn(`⚠️ Resend API request failed:`, resendErr?.message || resendErr);
+    }
+  }
+
+  // 2. Check if SMTP Transporter is configured
+  const transporter = getTransporter();
   if (transporter) {
     try {
       const fromAddress = `"${fromName}" <${fromEmail}>`;
@@ -171,13 +203,13 @@ export async function sendEmail({ to, subject, text, html }: SendEmailParams): P
       console.log(`📧 [LIVE SMTP] Outgoing Email Dispatched to ${to}: "${subject}" (MessageID: ${info.messageId})`);
       return { success: true, messageId: info.messageId, simulated: false };
     } catch (error: any) {
-      console.warn(`⚠️ SMTP delivery to ${to} deferred or failed (${error.message}). Message recorded in student in-app inbox.`);
+      console.warn(`⚠️ SMTP delivery to ${to} failed (${error.message}). Message recorded in student in-app inbox.`);
       return { success: false, messageId: `fallback-${Date.now()}`, simulated: true, error: error.message };
     }
-  } else {
-    console.log(`📬 [In-App Notification Dispatcher] To: ${to} | Subject: "${subject}" (In-App notifications active)`);
-    return { success: true, messageId: `simulated-${Date.now()}`, simulated: true, error: 'No SMTP credentials configured.' };
   }
+
+  console.log(`📬 [In-App Notification Dispatcher] To: ${to} | Subject: "${subject}" (No SMTP or Resend credentials provided in environment)`);
+  return { success: false, messageId: `simulated-${Date.now()}`, simulated: true, error: 'No live email credentials (SMTP or RESEND_API_KEY) configured in environment.' };
 }
 
 export function getWelcomeEmailHtml(name: string, email: string, tempPassword: string): string {

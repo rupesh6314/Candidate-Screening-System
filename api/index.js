@@ -1946,11 +1946,39 @@ function getEmailConfigStatus() {
   };
 }
 async function sendEmail({ to, subject, text, html }) {
-  const transporter = getTransporter();
   const custom = loadEmailConfig();
   const smtpUser = custom?.user || process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || "";
   const fromName = custom?.fromName || "Campus Placement Cell";
   const fromEmail = custom?.fromEmail || smtpUser || "placements@campus.edu";
+  const resendKey = process.env.RESEND_API_KEY || "";
+  if (resendKey) {
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: `${fromName} <onboarding@resend.dev>`,
+          to: [to],
+          subject,
+          text,
+          html: html || `<div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">${text.replace(/\n/g, "<br/>")}</div>`
+        })
+      });
+      const resData = await res.json();
+      if (res.ok && resData?.id) {
+        console.log(`\u{1F4E7} [RESEND API] Live Email Dispatched to ${to}: "${subject}" (ID: ${resData.id})`);
+        return { success: true, messageId: resData.id, simulated: false };
+      } else {
+        console.warn(`\u26A0\uFE0F Resend API returned error:`, resData);
+      }
+    } catch (resendErr) {
+      console.warn(`\u26A0\uFE0F Resend API request failed:`, resendErr?.message || resendErr);
+    }
+  }
+  const transporter = getTransporter();
   if (transporter) {
     try {
       const fromAddress = `"${fromName}" <${fromEmail}>`;
@@ -1968,13 +1996,12 @@ async function sendEmail({ to, subject, text, html }) {
       console.log(`\u{1F4E7} [LIVE SMTP] Outgoing Email Dispatched to ${to}: "${subject}" (MessageID: ${info.messageId})`);
       return { success: true, messageId: info.messageId, simulated: false };
     } catch (error) {
-      console.warn(`\u26A0\uFE0F SMTP delivery to ${to} deferred or failed (${error.message}). Message recorded in student in-app inbox.`);
+      console.warn(`\u26A0\uFE0F SMTP delivery to ${to} failed (${error.message}). Message recorded in student in-app inbox.`);
       return { success: false, messageId: `fallback-${Date.now()}`, simulated: true, error: error.message };
     }
-  } else {
-    console.log(`\u{1F4EC} [In-App Notification Dispatcher] To: ${to} | Subject: "${subject}" (In-App notifications active)`);
-    return { success: true, messageId: `simulated-${Date.now()}`, simulated: true, error: "No SMTP credentials configured." };
   }
+  console.log(`\u{1F4EC} [In-App Notification Dispatcher] To: ${to} | Subject: "${subject}" (No SMTP or Resend credentials provided in environment)`);
+  return { success: false, messageId: `simulated-${Date.now()}`, simulated: true, error: "No live email credentials (SMTP or RESEND_API_KEY) configured in environment." };
 }
 function getWelcomeEmailHtml(name, email, tempPassword) {
   const portalUrl = "https://candidate-screening-system-api.vercel.app/";
