@@ -137,24 +137,28 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     if (notificationsToCreate.length > 0) {
       await prisma.notification.createMany({ data: notificationsToCreate });
 
-      // Asynchronously send real SMTP HTML emails to eligible students
-      Promise.all(
-        eligibleStudents.map((st: any) =>
-          sendEmail({
-            to: st.email,
-            subject: `🎯 Campus Placement Alert: ${newDrive.companyName} (${newDrive.role}) Drive Active!`,
-            text: `Dear ${st.name},\n\nYou are eligible for the upcoming ${newDrive.companyName} campus placement drive for the role of "${newDrive.role}".\n\n• Package / CTC: ${newDrive.ctc}\n• Minimum CGPA Required: ${newDrive.minCgpa}\n• Application Window: Active until ${deadlineFormatted}\n\nPlease log in to your Student Placement Portal and submit your Opt-In response!`,
-            html: getDriveAlertEmailHtml(
-              st.name,
-              newDrive.companyName,
-              newDrive.role,
-              newDrive.ctc,
-              driveDeadline,
-              minCgpaNum
-            ),
-          })
-        )
-      ).catch((e) => console.error('Background drive emails error:', e));
+      // Send real SMTP HTML emails to eligible students before completing response
+      try {
+        await Promise.allSettled(
+          eligibleStudents.map((st: any) =>
+            sendEmail({
+              to: st.email,
+              subject: `🎯 Campus Placement Alert: ${newDrive.companyName} (${newDrive.role}) Drive Active!`,
+              text: `Dear ${st.name},\n\nYou are eligible for the upcoming ${newDrive.companyName} campus placement drive for the role of "${newDrive.role}".\n\n• Package / CTC: ${newDrive.ctc}\n• Minimum CGPA Required: ${newDrive.minCgpa}\n• Application Window: Active until ${deadlineFormatted}\n\nPlease log in to your Student Placement Portal and submit your Opt-In response!`,
+              html: getDriveAlertEmailHtml(
+                st.name,
+                newDrive.companyName,
+                newDrive.role,
+                newDrive.ctc,
+                driveDeadline,
+                minCgpaNum
+              ),
+            })
+          )
+        );
+      } catch (e) {
+        console.error('Drive emails dispatch error:', e);
+      }
     }
 
     // Audit log

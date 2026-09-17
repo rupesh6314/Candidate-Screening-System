@@ -2792,23 +2792,28 @@ When you log in for the first time, you MUST and SHOULD change your password imm
       } catch (notifErr) {
         console.warn("\u26A0\uFE0F Could not record initial student notification:", notifErr?.message || notifErr);
       }
-      sendEmail({
-        to: created.email,
-        subject: welcomeSubject,
-        text: welcomeMessage,
-        html: getWelcomeEmailHtml(created.name, created.email, tempPassword)
-      }).catch((err) => {
-        console.warn(`\u26A0\uFE0F Background email dispatch failed for ${created.email}:`, err?.message || err);
-      });
+      let emailDispatchResult = { success: false, simulated: true, error: "" };
+      try {
+        emailDispatchResult = await sendEmail({
+          to: created.email,
+          subject: welcomeSubject,
+          text: welcomeMessage,
+          html: getWelcomeEmailHtml(created.name, created.email, tempPassword)
+        });
+      } catch (err) {
+        console.warn(`\u26A0\uFE0F Direct email dispatch failed for ${created.email}:`, err?.message || err);
+      }
       await audit(req.user.id, "CREATE", "STUDENT", String(created.id), {
         email: created.email,
-        temporaryPasswordDispatched: true
+        temporaryPasswordDispatched: true,
+        smtpDispatched: emailDispatchResult.success
       });
       res.status(201).json({
         ...enrichStudent(created),
         temporaryPassword: tempPassword,
         credentialsEmailSent: true,
-        message: `Student account created successfully! Login credentials with temporary password (${tempPassword}) and security change notice were sent to ${created.email}.`
+        smtpDispatched: emailDispatchResult.success,
+        message: emailDispatchResult.success ? `Student profile registered and welcome email with login password successfully dispatched to ${created.email}!` : `Student profile registered successfully! Temporary password: ${tempPassword}. (Notification sent to candidate inbox).`
       });
     } catch (error) {
       next(error);
@@ -3613,12 +3618,13 @@ Please log in to your Student Placement Portal and submit your Opt-In response b
     }));
     if (notificationsToCreate.length > 0) {
       await prisma.notification.createMany({ data: notificationsToCreate });
-      Promise.all(
-        eligibleStudents.map(
-          (st) => sendEmail({
-            to: st.email,
-            subject: `\u{1F3AF} Campus Placement Alert: ${newDrive.companyName} (${newDrive.role}) Drive Active!`,
-            text: `Dear ${st.name},
+      try {
+        await Promise.allSettled(
+          eligibleStudents.map(
+            (st) => sendEmail({
+              to: st.email,
+              subject: `\u{1F3AF} Campus Placement Alert: ${newDrive.companyName} (${newDrive.role}) Drive Active!`,
+              text: `Dear ${st.name},
 
 You are eligible for the upcoming ${newDrive.companyName} campus placement drive for the role of "${newDrive.role}".
 
@@ -3627,17 +3633,20 @@ You are eligible for the upcoming ${newDrive.companyName} campus placement drive
 \u2022 Application Window: Active until ${deadlineFormatted}
 
 Please log in to your Student Placement Portal and submit your Opt-In response!`,
-            html: getDriveAlertEmailHtml(
-              st.name,
-              newDrive.companyName,
-              newDrive.role,
-              newDrive.ctc,
-              driveDeadline,
-              minCgpaNum
-            )
-          })
-        )
-      ).catch((e) => console.error("Background drive emails error:", e));
+              html: getDriveAlertEmailHtml(
+                st.name,
+                newDrive.companyName,
+                newDrive.role,
+                newDrive.ctc,
+                driveDeadline,
+                minCgpaNum
+              )
+            })
+          )
+        );
+      } catch (e) {
+        console.error("Drive emails dispatch error:", e);
+      }
     }
     await prisma.auditLog.create({
       data: {

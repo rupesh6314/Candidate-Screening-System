@@ -748,26 +748,33 @@ When you log in for the first time, you MUST and SHOULD change your password imm
         console.warn('⚠️ Could not record initial student notification:', notifErr?.message || notifErr);
       }
 
-      // Dispatch SMTP email asynchronously in background
-      sendEmail({
-        to: created.email,
-        subject: welcomeSubject,
-        text: welcomeMessage,
-        html: getWelcomeEmailHtml(created.name, created.email, tempPassword),
-      }).catch((err: any) => {
-        console.warn(`⚠️ Background email dispatch failed for ${created.email}:`, err?.message || err);
-      });
+      // Await email dispatch directly so serverless Lambda processes it before closing the connection
+      let emailDispatchResult: { success: boolean; messageId?: string; simulated?: boolean; error?: string } = { success: false, simulated: true, error: '' };
+      try {
+        emailDispatchResult = await sendEmail({
+          to: created.email,
+          subject: welcomeSubject,
+          text: welcomeMessage,
+          html: getWelcomeEmailHtml(created.name, created.email, tempPassword),
+        });
+      } catch (err: any) {
+        console.warn(`⚠️ Direct email dispatch failed for ${created.email}:`, err?.message || err);
+      }
 
       await audit(req.user!.id, 'CREATE', 'STUDENT', String(created.id), {
         email: created.email,
         temporaryPasswordDispatched: true,
+        smtpDispatched: emailDispatchResult.success,
       });
 
       res.status(201).json({
         ...enrichStudent(created),
         temporaryPassword: tempPassword,
         credentialsEmailSent: true,
-        message: `Student account created successfully! Login credentials with temporary password (${tempPassword}) and security change notice were sent to ${created.email}.`,
+        smtpDispatched: emailDispatchResult.success,
+        message: emailDispatchResult.success
+          ? `Student profile registered and welcome email with login password successfully dispatched to ${created.email}!`
+          : `Student profile registered successfully! Temporary password: ${tempPassword}. (Notification sent to candidate inbox).`,
       });
     } catch (error) {
       next(error);

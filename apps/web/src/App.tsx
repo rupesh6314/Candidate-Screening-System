@@ -146,7 +146,31 @@ export default function App() {
       ]);
 
       const fetchedStudents = studentsRes.data.students || [];
-      setStudents(fetchedStudents);
+      // Multi-layer persistence merge so new candidates are never lost on refresh
+      let mergedStudents: Student[] = [...fetchedStudents];
+      try {
+        const savedCustomRaw = localStorage.getItem('screening_custom_students');
+        if (savedCustomRaw) {
+          const customList: Student[] = JSON.parse(savedCustomRaw);
+          for (const customSt of customList) {
+            if (!mergedStudents.some((m) => m.id === customSt.id || (m.email && customSt.email && m.email.toLowerCase() === customSt.email.toLowerCase()) || (m.externalId && customSt.externalId && String(m.externalId) === String(customSt.externalId)))) {
+              mergedStudents.push(customSt);
+            }
+          }
+        }
+      } catch (_) {}
+
+      // Sort by CGPA desc, name asc
+      mergedStudents.sort((a, b) => {
+        const diff = (Number(b.cgpa) || 0) - (Number(a.cgpa) || 0);
+        if (diff !== 0) return diff;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      setStudents(mergedStudents);
+      try {
+        localStorage.setItem('screening_custom_students', JSON.stringify(mergedStudents));
+      } catch (_) {}
       setSummary(summaryRes.data);
       setDrives(drivesRes || []);
 
@@ -436,6 +460,13 @@ export default function App() {
       await api.delete(`/api/students/${id}`);
       showToast(`Candidate ${name} deleted successfully`);
       if (selectedStudentForDossier?.id === id) setSelectedStudentForDossier(null);
+      setStudents((prev) => {
+        const updated = prev.filter((s) => s.id !== id);
+        try {
+          localStorage.setItem('screening_custom_students', JSON.stringify(updated));
+        } catch (_) {}
+        return updated;
+      });
       fetchData();
     } catch (err: any) {
       showToast(err.response?.data?.error || 'Failed to delete student', 'error');
@@ -455,6 +486,9 @@ export default function App() {
     if (!window.confirm('Reset database to the benchmark 15-candidate dataset?')) return;
     try {
       setIsResetting(true);
+      try {
+        localStorage.removeItem('screening_custom_students');
+      } catch (_) {}
       await api.post('/api/students/reset-sample');
       showToast('Benchmark cohort dataset restored successfully!');
       fetchData();
@@ -782,16 +816,24 @@ export default function App() {
         onStudentAdded={(newStudentOrName: any) => {
           const studentObj = typeof newStudentOrName === 'object' && newStudentOrName?.id ? newStudentOrName : null;
           const candidateName = studentObj ? studentObj.name : String(newStudentOrName || 'Candidate');
-          showToast(`Candidate ${candidateName} added & evaluated successfully!`);
+          const emailNotice = studentObj?.smtpDispatched
+            ? ` Live login email sent to ${studentObj.email}!`
+            : studentObj?.temporaryPassword
+            ? ` Temporary password: ${studentObj.temporaryPassword}`
+            : '';
+          showToast(`Candidate ${candidateName} added & evaluated successfully!${emailNotice}`, 'success');
 
           if (studentObj) {
             setStudents((prev) => {
-              const filtered = prev.filter((s) => s.id !== studentObj.id);
+              const filtered = prev.filter((s) => s.id !== studentObj.id && (!s.email || s.email.toLowerCase() !== studentObj.email.toLowerCase()));
               const updated = [studentObj, ...filtered].sort((a, b) => {
                 const diff = (Number(b.cgpa) || 0) - (Number(a.cgpa) || 0);
                 if (diff !== 0) return diff;
                 return (a.name || '').localeCompare(b.name || '');
               });
+              try {
+                localStorage.setItem('screening_custom_students', JSON.stringify(updated));
+              } catch (_) {}
               return updated;
             });
           }
