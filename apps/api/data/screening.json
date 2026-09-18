@@ -676,13 +676,13 @@
       "overriddenBy": null,
       "overriddenAt": null,
       "isReviewed": false,
-      "passwordHash": "$2b$10$Iuo2MKpi914kM28lAhBUiON1CKO69UECbvTqxJvL/t9xrT3n1J9bC",
-      "mustChangePassword": true,
+      "passwordHash": "$2b$10$edFxTVUNSuc5RHLxfC/uQe6oLFRkmL/wBhRt2yuyzsPdflpUZy9pW",
+      "mustChangePassword": false,
       "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Rupesh",
       "resumeUrl": "https://drive.google.com/file/d/sample-resume-8624/view",
       "bio": "Final year Computer Science undergraduate candidate.",
       "createdAt": "2026-09-17T18:13:09.429Z",
-      "updatedAt": "2026-09-17T18:13:09.429Z"
+      "updatedAt": "2026-09-18T05:51:42.300Z"
     }
   ],
   "auditLogs": [

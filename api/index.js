@@ -3865,20 +3865,10 @@ router8.post("/:id/share-with-company", async (req, res) => {
 });
 router8.get("/student/:studentId", async (req, res) => {
   try {
-    const studentId = Number(req.params.studentId);
-    let student = await prisma.student.findUnique({ where: { id: studentId } });
+    const student = await resolveStudent(req.params.studentId, req.user?.email);
     if (!student) {
-      const all = await prisma.student.findMany();
-      student = all.find((s) => Number(s.id) === studentId || s.email === req.user?.email) || {
-        id: studentId || 1,
-        name: req.user?.name || "Student Candidate",
-        email: req.user?.email || "student@campus.edu",
-        branch: "Computer Science",
-        cgpa: 8.5,
-        skills: ["Python", "Data Structures", "React", "SQL"],
-        score: 8,
-        category: "STRONG"
-      };
+      res.status(404).json({ error: "Student not found" });
+      return;
     }
     const allDrives = await prisma.companyDrive.findMany();
     const studentApps = await prisma.driveApplication.findMany({ where: { studentId: student.id } });
@@ -3927,13 +3917,13 @@ router8.get("/student/:studentId", async (req, res) => {
 });
 router8.post("/student/:studentId/respond", async (req, res) => {
   try {
-    const studentId = Number(req.params.studentId);
+    const studentIdParam = req.params.studentId;
     const { driveId, status } = req.body;
     if (!driveId || !["OPTED_IN", "OPTED_OUT"].includes(status)) {
       res.status(400).json({ error: "Valid driveId and status (OPTED_IN / OPTED_OUT) are required." });
       return;
     }
-    const student = await prisma.student.findUnique({ where: { id: studentId } });
+    const student = await resolveStudent(studentIdParam, req.user?.email);
     if (!student) {
       res.status(404).json({ error: "Student not found." });
       return;
@@ -3958,32 +3948,17 @@ router8.post("/student/:studentId/respond", async (req, res) => {
     }
     const application = await prisma.driveApplication.upsert({
       where: {
-        driveId_studentId: { driveId, studentId }
+        driveId_studentId: { driveId, studentId: student.id }
       },
       update: {
         status,
-        studentName: student.name,
-        studentEmail: student.email,
-        studentPhone: student.phone || "",
-        studentBranch: student.branch,
-        studentCgpa: Number(student.cgpa),
-        studentSkills: student.skills || [],
-        studentResumeUrl: student.resumeUrl || "",
-        studentAvatarUrl: student.profileImage || ""
+        responseAt: /* @__PURE__ */ new Date()
       },
       create: {
         driveId,
-        studentId,
-        studentExternalId: student.externalId || String(student.id),
-        studentName: student.name,
-        studentEmail: student.email,
-        studentPhone: student.phone || "",
-        studentBranch: student.branch,
-        studentCgpa: Number(student.cgpa),
-        studentSkills: student.skills || [],
-        studentResumeUrl: student.resumeUrl || "",
-        studentAvatarUrl: student.profileImage || "",
+        studentId: student.id,
         status,
+        responseAt: /* @__PURE__ */ new Date(),
         isShortlistedByCoordinator: false,
         coordinatorNotes: ""
       }

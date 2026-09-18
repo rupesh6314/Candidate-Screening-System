@@ -4543,33 +4543,35 @@ button {
 .btn-row-opt-out {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 12px;
-  font-size: 12px;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12.5px;
   font-weight: 700;
   border-radius: var(--radius-md);
-  border: 1px solid;
+  border: 1.5px solid;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.01em;
 }
 
 .btn-row-opt-in {
-  background: #ecfdf5;
-  border-color: #6ee7b7;
-  color: #047857;
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #166534;
 }
 
 .btn-row-opt-in:hover {
-  background: #10b981;
-  border-color: #059669;
+  background: #16a34a;
+  border-color: #15803d;
   color: #ffffff;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
 }
 
 .btn-row-opt-in.active {
-  background: #059669 !important;
+  background: linear-gradient(135deg, #059669, #10b981) !important;
   border-color: #047857 !important;
   color: #ffffff !important;
-  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.4), 0 2px 4px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35), 0 4px 10px rgba(5, 150, 105, 0.25);
   font-weight: 800;
 }
 
@@ -4580,16 +4582,17 @@ button {
 }
 
 .btn-row-opt-out:hover {
-  background: #f43f5e;
-  border-color: #e11d48;
+  background: #e11d48;
+  border-color: #be123c;
   color: #ffffff;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.3);
 }
 
 .btn-row-opt-out.active {
-  background: #e11d48 !important;
+  background: linear-gradient(135deg, #e11d48, #f43f5e) !important;
   border-color: #be123c !important;
   color: #ffffff !important;
-  box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.4), 0 2px 4px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.35), 0 4px 10px rgba(225, 29, 72, 0.25);
   font-weight: 800;
 }
 

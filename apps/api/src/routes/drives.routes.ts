@@ -337,20 +337,10 @@ router.post('/:id/share-with-company', async (req: Request, res: Response): Prom
 // GET /api/drives/student/:studentId - Tailored company feeds for a student (Active, Not Opted-In, All)
 router.get('/student/:studentId', async (req: Request, res: Response): Promise<void> => {
   try {
-    const studentId = Number(req.params.studentId);
-    let student = await prisma.student.findUnique({ where: { id: studentId } });
+    const student = await resolveStudent(req.params.studentId, (req as any).user?.email);
     if (!student) {
-      const all = await prisma.student.findMany();
-      student = all.find((s: any) => Number(s.id) === studentId || s.email === (req as any).user?.email) || {
-        id: studentId || 1,
-        name: (req as any).user?.name || 'Student Candidate',
-        email: (req as any).user?.email || 'student@campus.edu',
-        branch: 'Computer Science',
-        cgpa: 8.5,
-        skills: ['Python', 'Data Structures', 'React', 'SQL'],
-        score: 8,
-        category: 'STRONG',
-      };
+      res.status(404).json({ error: 'Student not found' });
+      return;
     }
 
     const allDrives = await prisma.companyDrive.findMany();
@@ -417,7 +407,7 @@ router.get('/student/:studentId', async (req: Request, res: Response): Promise<v
 // POST /api/drives/student/:studentId/respond - Student Opt-In or Opt-Out
 router.post('/student/:studentId/respond', async (req: Request, res: Response): Promise<void> => {
   try {
-    const studentId = Number(req.params.studentId);
+    const studentIdParam = req.params.studentId;
     const { driveId, status } = req.body;
 
     if (!driveId || !['OPTED_IN', 'OPTED_OUT'].includes(status)) {
@@ -425,7 +415,7 @@ router.post('/student/:studentId/respond', async (req: Request, res: Response): 
       return;
     }
 
-    const student = await prisma.student.findUnique({ where: { id: studentId } });
+    const student = await resolveStudent(studentIdParam, (req as any).user?.email);
     if (!student) {
       res.status(404).json({ error: 'Student not found.' });
       return;
@@ -454,35 +444,19 @@ router.post('/student/:studentId/respond', async (req: Request, res: Response): 
       return;
     }
 
-    // When student opts in, snapshot their complete mandatory profile to attach for coordinator review
     const application = await prisma.driveApplication.upsert({
       where: {
-        driveId_studentId: { driveId, studentId },
+        driveId_studentId: { driveId, studentId: student.id },
       },
       update: {
         status,
-        studentName: student.name,
-        studentEmail: student.email,
-        studentPhone: student.phone || '',
-        studentBranch: student.branch,
-        studentCgpa: Number(student.cgpa),
-        studentSkills: student.skills || [],
-        studentResumeUrl: student.resumeUrl || '',
-        studentAvatarUrl: student.profileImage || '',
+        responseAt: new Date(),
       },
       create: {
         driveId,
-        studentId,
-        studentExternalId: student.externalId || String(student.id),
-        studentName: student.name,
-        studentEmail: student.email,
-        studentPhone: student.phone || '',
-        studentBranch: student.branch,
-        studentCgpa: Number(student.cgpa),
-        studentSkills: student.skills || [],
-        studentResumeUrl: student.resumeUrl || '',
-        studentAvatarUrl: student.profileImage || '',
+        studentId: student.id,
         status,
+        responseAt: new Date(),
         isShortlistedByCoordinator: false,
         coordinatorNotes: '',
       },
