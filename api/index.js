@@ -3899,7 +3899,10 @@ router8.get("/student/:studentId", async (req, res) => {
     );
     const allEligibleDrives = enrichedDrives;
     res.json({
-      student,
+      student: {
+        ...student,
+        mustChangePassword: Boolean(student.mustChangePassword)
+      },
       feeds: {
         active: activeDrives,
         notOptedIn: notOptedInDrives,

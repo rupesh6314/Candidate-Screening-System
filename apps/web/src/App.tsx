@@ -577,6 +577,19 @@ export default function App() {
             currentStudent={activeStudentObj}
             onUpdateStudent={(updated) => {
               setCurrentStudent(updated);
+              if (currentUser) {
+                const updatedUser = {
+                  ...currentUser,
+                  mustChangePassword: Boolean(updated.mustChangePassword),
+                };
+                setCurrentUser(updatedUser);
+                try {
+                  localStorage.setItem('screening_user', JSON.stringify(updatedUser));
+                } catch (_) {}
+              }
+              try {
+                localStorage.setItem('screening_student', JSON.stringify(updated));
+              } catch (_) {}
               fetchData();
             }}
             onNotify={showToast}

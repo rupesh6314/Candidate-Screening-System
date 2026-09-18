@@ -387,7 +387,10 @@ router.get('/student/:studentId', async (req: Request, res: Response): Promise<v
     const allEligibleDrives = enrichedDrives;
 
     res.json({
-      student,
+      student: {
+        ...student,
+        mustChangePassword: Boolean(student.mustChangePassword),
+      },
       feeds: {
         active: activeDrives,
         notOptedIn: notOptedInDrives,

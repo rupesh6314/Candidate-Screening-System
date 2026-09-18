@@ -134,6 +134,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      student.mustChangePassword = false;
       if (onPasswordChanged) onPasswordChanged();
       setTimeout(() => {
         setPassSuccess('');

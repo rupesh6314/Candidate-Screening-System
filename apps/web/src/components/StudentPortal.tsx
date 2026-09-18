@@ -68,6 +68,9 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
         fetchStudentDriveFeeds(currentStudent.id),
         fetchStudentNotifications(currentStudent.id),
       ]);
+      if (feedData?.student) {
+        onUpdateStudent(feedData.student);
+      }
       setFeeds(feedData.feeds);
       setCounts(feedData.counts);
       setNotifications(notifs || []);
