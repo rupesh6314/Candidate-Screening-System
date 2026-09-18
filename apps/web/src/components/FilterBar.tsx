@@ -180,7 +180,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               }}
             />
             <div className="cgpa-ticks-wrapper">
-              {[0, 2, 4, 6, 7, 8, 9, 10].map((val) => {
+              {[0, 2, 4, 6, 8, 10].map((val) => {
                 const isCurrent = minCgpa ? Math.abs(Number(minCgpa) - val) < 0.05 : val === 0;
                 return (
                   <button
