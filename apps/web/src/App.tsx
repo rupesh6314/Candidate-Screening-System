@@ -146,31 +146,15 @@ export default function App() {
       ]);
 
       const fetchedStudents = studentsRes.data.students || [];
-      // Multi-layer persistence merge so new candidates are never lost on refresh
-      let mergedStudents: Student[] = [...fetchedStudents];
-      try {
-        const savedCustomRaw = localStorage.getItem('screening_custom_students');
-        if (savedCustomRaw) {
-          const customList: Student[] = JSON.parse(savedCustomRaw);
-          for (const customSt of customList) {
-            if (!mergedStudents.some((m) => m.id === customSt.id || (m.email && customSt.email && m.email.toLowerCase() === customSt.email.toLowerCase()) || (m.externalId && customSt.externalId && String(m.externalId) === String(customSt.externalId)))) {
-              mergedStudents.push(customSt);
-            }
-          }
-        }
-      } catch (_) {}
 
       // Sort by CGPA desc, name asc
-      mergedStudents.sort((a, b) => {
+      fetchedStudents.sort((a: Student, b: Student) => {
         const diff = (Number(b.cgpa) || 0) - (Number(a.cgpa) || 0);
         if (diff !== 0) return diff;
         return (a.name || '').localeCompare(b.name || '');
       });
 
-      setStudents(mergedStudents);
-      try {
-        localStorage.setItem('screening_custom_students', JSON.stringify(mergedStudents));
-      } catch (_) {}
+      setStudents(fetchedStudents);
       setSummary(summaryRes.data);
       setDrives(drivesRes || []);
 
@@ -274,13 +258,80 @@ export default function App() {
     (hasCertification ? 1 : 0) +
     (isOverriddenOnly ? 1 : 0);
 
-  // Real-time Reactive Dashboard Metrics computed instantaneously from students
+  // Real-time Reactive Filtered Candidate List across all multi-dimensional filters
+  const filteredStudents = useMemo(() => {
+    return students.filter((s) => {
+      // 1. Min CGPA Cutoff filter
+      if (minCgpa && minCgpa.trim() !== '') {
+        const minNum = parseFloat(minCgpa);
+        if (!isNaN(minNum) && (Number(s.cgpa) || 0) < minNum) {
+          return false;
+        }
+      }
+      // 2. Search query filter (name, email, externalId, skills)
+      if (search.trim()) {
+        const query = search.toLowerCase().trim();
+        const matchesName = s.name?.toLowerCase().includes(query);
+        const matchesEmail = s.email?.toLowerCase().includes(query);
+        const matchesExtId = s.externalId ? String(s.externalId).toLowerCase().includes(query) : false;
+        const matchesSkill = s.skills?.some((sk) => sk.toLowerCase().includes(query));
+        if (!matchesName && !matchesEmail && !matchesExtId && !matchesSkill) return false;
+      }
+      // 3. Category filter (considering manual override)
+      const effectiveCategory = s.isOverridden && s.overrideCategory ? s.overrideCategory : s.category;
+      if (category && effectiveCategory !== category) {
+        return false;
+      }
+      // 4. Branch filter
+      if (branch && s.branch !== branch) {
+        return false;
+      }
+      // 5. Internship filter
+      if (hasInternship && (!s.internships || s.internships.length === 0)) {
+        return false;
+      }
+      // 6. Certification filter
+      if (hasCertification && (!s.certifications || s.certifications.length === 0)) {
+        return false;
+      }
+      // 7. Overridden only filter
+      if (isOverriddenOnly && !s.isOverridden) {
+        return false;
+      }
+      // 8. Skills filter
+      if (selectedSkills.length > 0) {
+        const studentSkills = (s.skills || []).map((sk) => sk.toLowerCase());
+        if (skillsMatchMode === 'AND') {
+          const hasAll = selectedSkills.every((sk) => studentSkills.includes(sk.toLowerCase()));
+          if (!hasAll) return false;
+        } else {
+          const hasAny = selectedSkills.some((sk) => studentSkills.includes(sk.toLowerCase()));
+          if (!hasAny) return false;
+        }
+      }
+      return true;
+    });
+  }, [
+    students,
+    minCgpa,
+    search,
+    category,
+    branch,
+    hasInternship,
+    hasCertification,
+    isOverriddenOnly,
+    selectedSkills,
+    skillsMatchMode,
+  ]);
+
+  // Real-time Reactive Dashboard Metrics computed instantaneously from filtered candidates
   const liveSummary = useMemo<DashboardSummary | null>(() => {
     if (!students || students.length === 0) {
       return summary || null;
     }
 
-    const total = students.length;
+    const targetList = filteredStudents;
+    const total = targetList.length;
     let strong = 0;
     let average = 0;
     let needsImprovement = 0;
@@ -289,7 +340,7 @@ export default function App() {
     let overriddenCount = 0;
     let cgpaSum = 0;
     let maxCgpa = 0;
-    let minCgpa = total > 0 ? (Number(students[0]?.cgpa) || 10) : 0;
+    let minCgpaVal = total > 0 ? (Number(targetList[0]?.cgpa) || 10) : 0;
 
     const cgpaHistogram: Record<string, number> = {
       '<6.0': 0,
@@ -299,7 +350,7 @@ export default function App() {
       '9.0–10.0': 0,
     };
 
-    for (const s of students) {
+    for (const s of targetList) {
       const cat = (s.isOverridden && s.overrideCategory) ? s.overrideCategory : s.category;
       if (cat === 'STRONG') strong++;
       else if (cat === 'AVERAGE') average++;
@@ -310,7 +361,7 @@ export default function App() {
       const numCgpa = Number(s.cgpa) || 0;
       cgpaSum += numCgpa;
       if (numCgpa > maxCgpa) maxCgpa = numCgpa;
-      if (numCgpa < minCgpa) minCgpa = numCgpa;
+      if (numCgpa < minCgpaVal) minCgpaVal = numCgpa;
 
       if (numCgpa < 6.0) cgpaHistogram['<6.0']++;
       else if (numCgpa < 7.0) cgpaHistogram['6.0–6.9']++;
@@ -330,7 +381,7 @@ export default function App() {
     const averageCgpa = total > 0 ? Number((cgpaSum / total).toFixed(2)) : 0;
 
     return {
-      totalCohortCount: summary?.totalCohortCount ? Math.max(summary.totalCohortCount, total) : total,
+      totalCohortCount: summary?.totalCohortCount ? Math.max(summary.totalCohortCount, students.length) : students.length,
       total,
       isFiltered: activeFilterCount > 0,
       strong,
@@ -341,7 +392,7 @@ export default function App() {
       needsPct,
       averageCgpa,
       maxCgpa: total > 0 ? maxCgpa : 0,
-      minCgpa: total > 0 ? minCgpa : 0,
+      minCgpa: total > 0 ? minCgpaVal : 0,
       withInternship,
       internshipRate,
       withCertification,
@@ -358,7 +409,7 @@ export default function App() {
         maxScore: 10,
       },
     };
-  }, [students, summary, activeFilterCount]);
+  }, [filteredStudents, students, summary, activeFilterCount]);
 
   const handleClearFilters = () => {
     setSearch('');
@@ -506,11 +557,31 @@ export default function App() {
     fetchData();
   };
 
+  // Client-side sorted students derived from filtered candidates
+  const sortedStudents = useMemo(() => {
+    const list = [...filteredStudents];
+    list.sort((a, b) => {
+      let valA: any = a[sortBy as keyof Student];
+      let valB: any = b[sortBy as keyof Student];
+      if (sortBy === 'cgpa' || sortBy === 'score') {
+        valA = Number(valA) || 0;
+        valB = Number(valB) || 0;
+      } else {
+        valA = (valA ?? '').toString().toLowerCase();
+        valB = (valB ?? '').toString().toLowerCase();
+      }
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return list;
+  }, [filteredStudents, sortBy, sortOrder]);
+
   // Paginated Students Slice
   const paginatedStudents = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return students.slice(start, start + pageSize);
-  }, [students, page, pageSize]);
+    return sortedStudents.slice(start, start + pageSize);
+  }, [sortedStudents, page, pageSize]);
 
   // Selected candidates for comparison modal
   const comparisonCandidates = useMemo(() => {
@@ -728,7 +799,7 @@ export default function App() {
           onSort={handleSort}
           page={page}
           pageSize={pageSize}
-          totalStudents={students.length}
+          totalStudents={sortedStudents.length}
           onPageChange={setPage}
           onPageSizeChange={(size) => {
             setPageSize(size);
