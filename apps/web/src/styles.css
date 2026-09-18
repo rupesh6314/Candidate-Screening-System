@@ -5301,6 +5301,172 @@ button {
   color: #ffffff;
 }
 
+/* CGPA Filter Toolbar & Presets */
+.cgpa-filter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.cgpa-filter-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cgpa-filter-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--slate-700);
+}
+
+.cgpa-presets-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.cgpa-preset-btn {
+  padding: 4px 9px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--slate-300);
+  background: #ffffff;
+  color: var(--slate-700);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.cgpa-preset-btn:hover {
+  background: var(--slate-100);
+  border-color: var(--slate-400);
+}
+
+.cgpa-preset-btn.active {
+  background: var(--primary-600);
+  color: #ffffff;
+  border-color: var(--primary-600);
+  box-shadow: var(--shadow-sm);
+}
+
+.cgpa-input-wrap {
+  width: 105px;
+}
+
+.cgpa-custom-input {
+  height: 28px !important;
+  font-size: 11.5px !important;
+  padding: 2px 8px !important;
+  background: #ffffff !important;
+}
+
+.cgpa-filter-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-filter-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--slate-300);
+  background: #ffffff;
+  color: var(--slate-700);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btn-filter-action:hover {
+  background: var(--slate-100);
+}
+
+.btn-filter-action.primary {
+  background: #a855f7;
+  color: #ffffff;
+  border-color: #a855f7;
+}
+
+.btn-filter-action.primary:hover {
+  background: #9333ea;
+}
+
+.btn-filter-action.outline {
+  border-color: #fca5a5;
+  color: #dc2626;
+  background: #fff5f5;
+}
+
+.cgpa-filter-summary-note {
+  font-size: 12px;
+  color: var(--primary-800);
+  background: var(--primary-50);
+  border: 1px solid var(--primary-200);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  margin-bottom: 14px;
+}
+
+.btn-candidate-select-check {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.applicant-card.selected-for-dispatch {
+  border-color: var(--primary-500);
+  background: #f0f9ff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.12);
+}
+
+.dispatched-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  font-size: 9.5px;
+  font-weight: 800;
+  border-radius: var(--radius-full);
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.btn-locked-dispatched {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1px solid #86efac !important;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: not-allowed;
+  opacity: 0.95;
+}
+
 /* 7. Student Profile Modal & Form Elements */
 .profile-preview-card {
   display: flex;

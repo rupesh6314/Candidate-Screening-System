@@ -3972,15 +3972,21 @@ router8.get("/:id/applicants", async (req, res) => {
     const optedIn = detailedApplicants.filter((a) => a.status === "OPTED_IN");
     const optedOut = detailedApplicants.filter((a) => a.status === "OPTED_OUT");
     const shortlisted = optedIn.filter((a) => a.isShortlistedByCoordinator);
+    const dispatched = optedIn.filter((a) => a.sharedWithCompanyAt != null);
+    const latestDispatchedAt = dispatched.length > 0 ? dispatched.map((d) => new Date(d.sharedWithCompanyAt).getTime()).sort((a, b) => b - a)[0] : null;
     res.json({
       drive,
       optedIn,
       optedOut,
       shortlisted,
+      isDispatched: dispatched.length > 0,
+      dispatchedAt: latestDispatchedAt ? new Date(latestDispatchedAt).toISOString() : null,
+      dispatchedCount: dispatched.length,
       summary: {
         totalOptedIn: optedIn.length,
         totalOptedOut: optedOut.length,
-        totalShortlisted: shortlisted.length
+        totalShortlisted: shortlisted.length,
+        dispatchedCount: dispatched.length
       }
     });
   } catch (error) {
@@ -4021,16 +4027,38 @@ router8.post("/:id/share-with-company", async (req, res) => {
       res.status(404).json({ error: "Company drive not found" });
       return;
     }
+    const { candidateIds, minCgpa } = req.body || {};
     const applications = await prisma.driveApplication.findMany({
-      where: { driveId: req.params.id, status: "OPTED_IN" }
+      where: { driveId: req.params.id, status: "OPTED_IN" },
+      include: { student: true }
     });
-    const shortlisted = applications.filter((a) => a.isShortlistedByCoordinator);
-    const candidatesToShare = shortlisted.length > 0 ? shortlisted : applications;
+    if (applications.length === 0) {
+      res.status(400).json({ error: "No opted-in candidate applications exist for this recruitment drive." });
+      return;
+    }
+    let candidatesToShare = applications;
+    if (Array.isArray(candidateIds) && candidateIds.length > 0) {
+      const idSet = new Set(candidateIds.map((id) => Number(id)));
+      candidatesToShare = applications.filter((a) => idSet.has(Number(a.studentId)));
+    } else if (minCgpa !== void 0 && minCgpa !== null && !isNaN(Number(minCgpa))) {
+      const threshold = Number(minCgpa);
+      candidatesToShare = applications.filter((a) => Number(a.student?.cgpa ?? 0) >= threshold);
+    } else {
+      const shortlisted = applications.filter((a) => a.isShortlistedByCoordinator);
+      candidatesToShare = shortlisted.length > 0 ? shortlisted : applications;
+    }
+    if (candidatesToShare.length === 0) {
+      res.status(400).json({ error: "No candidates matched the selected criteria for dispatch." });
+      return;
+    }
     const sharedAt = (/* @__PURE__ */ new Date()).toISOString();
     for (const app2 of candidatesToShare) {
       await prisma.driveApplication.update({
         where: { id: app2.id },
-        data: { sharedWithCompanyAt: sharedAt }
+        data: {
+          sharedWithCompanyAt: new Date(sharedAt),
+          isShortlistedByCoordinator: true
+        }
       });
     }
     await prisma.auditLog.create({
@@ -4038,11 +4066,13 @@ router8.post("/:id/share-with-company", async (req, res) => {
         action: "CANDIDATE_LIST_DISPATCHED_TO_COMPANY",
         entityType: "COMPANY_DRIVE",
         entityId: drive.id,
-        userEmail: "admin@placement.edu",
+        userEmail: req.user?.email || "admin@placement.edu",
         details: JSON.stringify({
           companyName: drive.companyName,
           role: drive.role,
           dispatchedCount: candidatesToShare.length,
+          minCgpaFilter: minCgpa || null,
+          candidateIdsCount: Array.isArray(candidateIds) ? candidateIds.length : null,
           sharedAt
         })
       }

@@ -310,7 +310,10 @@ export const fetchDriveApplicants = async (driveId: string): Promise<{
   optedIn: DriveApplication[];
   optedOut: DriveApplication[];
   shortlisted: DriveApplication[];
-  summary: { totalOptedIn: number; totalOptedOut: number; totalShortlisted: number };
+  isDispatched?: boolean;
+  dispatchedAt?: string | null;
+  dispatchedCount?: number;
+  summary: { totalOptedIn: number; totalOptedOut: number; totalShortlisted: number; dispatchedCount?: number };
 }> => {
   const res = await api.get(`/api/drives/${driveId}/applicants`);
   return res.data;
@@ -329,14 +332,17 @@ export const updateApplicantShortlist = async (
   return res.data.application;
 };
 
-export const shareDriveWithCompany = async (driveId: string): Promise<{
+export const shareDriveWithCompany = async (
+  driveId: string,
+  payload?: { candidateIds?: number[]; minCgpa?: number }
+): Promise<{
   success: boolean;
   message: string;
   dispatchedCount: number;
   candidates: DriveApplication[];
   sharedAt: string;
 }> => {
-  const res = await api.post(`/api/drives/${driveId}/share-with-company`);
+  const res = await api.post(`/api/drives/${driveId}/share-with-company`, payload || {});
   return res.data;
 };
 
