@@ -118,13 +118,36 @@ export const DriveApplicantsModal: React.FC<DriveApplicantsModalProps> = ({
       ? shortlisted
       : optedOut;
 
-  const filteredList = currentList.filter((app) => {
+  const normalizedList = currentList.map((app) => {
+    const s = (app as any).student;
+    return {
+      ...app,
+      studentName: app.studentName || s?.name || `Candidate #${app.studentId}`,
+      studentEmail: app.studentEmail || s?.email || '',
+      studentPhone: app.studentPhone || s?.phone || '',
+      studentBranch: app.studentBranch || s?.branch || 'Computer Science',
+      studentCgpa: Number(app.studentCgpa ?? s?.cgpa ?? 0),
+      studentSkills: Array.isArray(app.studentSkills) && app.studentSkills.length > 0
+        ? app.studentSkills
+        : Array.isArray(s?.skills)
+        ? s.skills
+        : [],
+      studentResumeUrl: app.studentResumeUrl || s?.resumeUrl || '',
+      studentAvatarUrl:
+        app.studentAvatarUrl ||
+        s?.profileImage ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(app.studentName || s?.name || String(app.studentId))}`,
+      studentExternalId: app.studentExternalId || s?.externalId || String(app.studentId),
+    };
+  });
+
+  const filteredList = normalizedList.filter((app) => {
     const q = searchQuery.toLowerCase();
     return (
       (app.studentName || '').toLowerCase().includes(q) ||
       (app.studentEmail || '').toLowerCase().includes(q) ||
       (app.studentBranch || '').toLowerCase().includes(q) ||
-      (app.studentSkills || []).some((sk) => sk.toLowerCase().includes(q))
+      (app.studentSkills || []).some((sk: string) => String(sk).toLowerCase().includes(q))
     );
   });
 
@@ -280,7 +303,7 @@ export const DriveApplicantsModal: React.FC<DriveApplicantsModalProps> = ({
                     <span className="skills-heading">Verified Skills:</span>
                     <div className="tags-wrap">
                       {app.studentSkills && app.studentSkills.length > 0 ? (
-                        app.studentSkills.map((sk) => (
+                        app.studentSkills.map((sk: string) => (
                           <span key={sk} className="app-skill-chip">
                             {sk}
                           </span>

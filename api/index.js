@@ -3771,17 +3771,26 @@ router8.get("/:id/applicants", async (req, res) => {
     const detailedApplicants = applications.map((app2) => {
       const s = students.find((st) => Number(st.id) === Number(app2.studentId));
       return {
-        ...app2,
-        student: s || {
-          id: app2.studentId,
-          name: app2.studentName,
-          email: app2.studentEmail,
-          cgpa: app2.studentCgpa,
-          branch: app2.studentBranch,
-          skills: app2.studentSkills || [],
-          resumeUrl: app2.studentResumeUrl || "",
-          profileImage: app2.studentAvatarUrl || ""
-        }
+        id: app2.id,
+        driveId: app2.driveId,
+        studentId: app2.studentId,
+        status: app2.status,
+        responseAt: app2.responseAt,
+        isShortlistedByCoordinator: Boolean(app2.isShortlistedByCoordinator),
+        coordinatorNotes: app2.coordinatorNotes || "",
+        sharedWithCompanyAt: app2.sharedWithCompanyAt || null,
+        createdAt: app2.createdAt,
+        updatedAt: app2.updatedAt,
+        studentExternalId: s?.externalId || String(app2.studentId),
+        studentName: s?.name || "Candidate #" + app2.studentId,
+        studentEmail: s?.email || "",
+        studentPhone: s?.phone || "",
+        studentBranch: s?.branch || "General",
+        studentCgpa: Number(s?.cgpa ?? 0),
+        studentSkills: Array.isArray(s?.skills) ? s.skills : [],
+        studentResumeUrl: s?.resumeUrl || "",
+        studentAvatarUrl: s?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s?.name || String(app2.studentId))}`,
+        student: s || null
       };
     });
     const optedIn = detailedApplicants.filter((a) => a.status === "OPTED_IN");
