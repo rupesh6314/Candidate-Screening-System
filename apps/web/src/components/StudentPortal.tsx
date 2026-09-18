@@ -280,18 +280,37 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
                     <h4>
                       <Bell size={15} /> Placement Email Alerts ({notifications.length})
                     </h4>
-                    <button
-                      type="button"
-                      className="btn-close-notifs"
-                      onClick={() => setShowNotifications(false)}
-                    >
-                      ✕
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {notifications.length > 0 && (
+                        <button
+                          type="button"
+                          className="btn-filter-action outline"
+                          style={{ padding: '2px 8px', fontSize: '11px', height: 'auto' }}
+                          onClick={() => setNotifications([])}
+                          title="Clear all alerts"
+                        >
+                          Clear
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn-close-notifs"
+                        onClick={() => setShowNotifications(false)}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                   <div className="notif-dropdown-list">
                     {notifications.length === 0 ? (
-                      <div className="notif-empty" style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>
-                        <p style={{ margin: 0, fontSize: '13px' }}>No placement alerts yet.</p>
+                      <div className="notif-empty" style={{ padding: '24px 16px', textAlign: 'center', color: '#64748b' }}>
+                        <Bell size={24} style={{ opacity: 0.4, margin: '0 auto 8px auto', display: 'block' }} />
+                        <p style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+                          No New Placement Alerts
+                        </p>
+                        <p style={{ margin: 0, fontSize: '11.5px', color: '#94a3b8' }}>
+                          You will receive real-time notifications here when new company drives matching your CGPA are announced.
+                        </p>
                       </div>
                     ) : (
                       notifications.map((n, idx) => (
