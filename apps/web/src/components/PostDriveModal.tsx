@@ -56,13 +56,17 @@ export const PostDriveModal: React.FC<PostDriveModalProps> = ({
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
-  const currentLocalMin = toLocalIso(new Date());
+  const getNowLocalMin = () => toLocalIso(new Date());
 
   // Default deadline: 3 days from now at 11:59 PM in local coordinator time
-  const defaultDeadlineDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-  defaultDeadlineDate.setHours(23, 59, 0, 0);
-  const [deadline, setDeadline] = useState(toLocalIso(defaultDeadlineDate));
+  const getDefaultDeadline = () => {
+    const d = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    d.setHours(23, 59, 0, 0);
+    return toLocalIso(d);
+  };
 
+  const [deadline, setDeadline] = useState(getDefaultDeadline());
+  const [deadlineWarning, setDeadlineWarning] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -81,6 +85,54 @@ export const PostDriveModal: React.FC<PostDriveModalProps> = ({
       setAllowedBranches(allowedBranches.filter((item) => item !== b));
     } else {
       setAllowedBranches([...allowedBranches, b]);
+    }
+  };
+
+  const handleSelectAllBranches = () => {
+    setAllowedBranches([...branchesList]);
+  };
+
+  const handleClearBranches = () => {
+    setAllowedBranches([]);
+  };
+
+  const setDeadlinePreset = (daysFromNow: number, hours: number = 23, minutes: number = 59) => {
+    const d = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
+    d.setHours(hours, minutes, 0, 0);
+    const iso = toLocalIso(d);
+    setDeadline(iso);
+    setDeadlineWarning('');
+    setError('');
+  };
+
+  const handleDeadlineChange = (val: string) => {
+    setDeadline(val);
+    if (!val) {
+      setDeadlineWarning('Please select a deadline date and time.');
+      return;
+    }
+    const selected = new Date(val);
+    const now = new Date();
+    if (!isNaN(selected.getTime())) {
+      if (selected.getTime() <= now.getTime()) {
+        setDeadlineWarning(`⚠️ Deadlines cannot be in the past! Earliest selectable date is today (${now.toLocaleDateString('en-IN')}).`);
+      } else {
+        setDeadlineWarning('');
+        setError('');
+      }
+    }
+  };
+
+  const handleDeadlineBlur = () => {
+    if (!deadline) return;
+    const selected = new Date(deadline);
+    const now = new Date();
+    if (isNaN(selected.getTime()) || selected.getTime() <= now.getTime()) {
+      // Automatically snap to today 11:59 PM if past date was chosen
+      const fallback = new Date();
+      fallback.setHours(23, 59, 0, 0);
+      setDeadline(toLocalIso(fallback));
+      setDeadlineWarning(`Adjusted to today at 11:59 PM (past dates are disallowed).`);
     }
   };
 
@@ -273,17 +325,65 @@ export const PostDriveModal: React.FC<PostDriveModalProps> = ({
               </div>
 
               <div className="form-group">
-                <label className="form-label">Application Deadline (Date & Time) *</label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <label className="form-label" style={{ margin: 0 }}>Application Deadline (Date & Time) *</label>
+                  <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>Strict future date required</span>
+                </div>
+
+                {/* Quick Presets */}
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                  <button
+                    type="button"
+                    className="cgpa-preset-btn"
+                    onClick={() => setDeadlinePreset(0, 23, 59)}
+                    title="Set deadline to today at 11:59 PM"
+                  >
+                    Today 11:59 PM
+                  </button>
+                  <button
+                    type="button"
+                    className="cgpa-preset-btn"
+                    onClick={() => setDeadlinePreset(1, 23, 59)}
+                    title="Set deadline to tomorrow at 11:59 PM"
+                  >
+                    Tomorrow 11:59 PM
+                  </button>
+                  <button
+                    type="button"
+                    className="cgpa-preset-btn"
+                    onClick={() => setDeadlinePreset(3, 23, 59)}
+                    title="Set deadline to 3 days from now"
+                  >
+                    +3 Days
+                  </button>
+                  <button
+                    type="button"
+                    className="cgpa-preset-btn"
+                    onClick={() => setDeadlinePreset(7, 23, 59)}
+                    title="Set deadline to 1 week from now"
+                  >
+                    +1 Week
+                  </button>
+                </div>
+
                 <input
                   type="datetime-local"
                   className="filter-input"
-                  min={currentLocalMin}
+                  min={getNowLocalMin()}
                   value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
+                  onChange={(e) => handleDeadlineChange(e.target.value)}
+                  onBlur={handleDeadlineBlur}
                   required
                 />
+
+                {deadlineWarning && (
+                  <div style={{ color: '#dc2626', fontSize: 12, fontWeight: 700, marginTop: 4 }}>
+                    {deadlineWarning}
+                  </div>
+                )}
+
                 <span className="form-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
-                  <span>Strict cut-off date & time. You cannot choose a past date/time.</span>
+                  <span>Earliest selectable date is today ({new Date().toLocaleDateString('en-IN')}).</span>
                   {deadline && !isNaN(new Date(deadline).getTime()) && (
                     <strong style={{ color: '#059669', fontSize: '12px' }}>
                       Selected: {new Date(deadline).toLocaleString('en-IN', {
@@ -300,8 +400,26 @@ export const PostDriveModal: React.FC<PostDriveModalProps> = ({
               </div>
             </div>
 
-            <div className="form-section-title">
-              <GraduationCap size={16} /> Eligible Engineering Branches
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: 8 }}>
+              <div className="form-section-title" style={{ margin: 0 }}>
+                <GraduationCap size={16} /> Eligible Engineering Branches ({allowedBranches.length}/{branchesList.length})
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  type="button"
+                  className="btn-filter-action"
+                  onClick={handleSelectAllBranches}
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  className="btn-filter-action outline"
+                  onClick={handleClearBranches}
+                >
+                  Clear
+                </button>
+              </div>
             </div>
 
             <div className="branch-selector-wrap mb-4">

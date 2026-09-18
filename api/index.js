@@ -3996,27 +3996,56 @@ router8.get("/:id/applicants", async (req, res) => {
 router8.patch("/:id/applicants/:studentId", async (req, res) => {
   try {
     const { isShortlisted, coordinatorNotes } = req.body;
-    const driveId = req.params.id;
+    const driveIdParam = req.params.id;
+    let drive = await prisma.companyDrive.findUnique({ where: { id: driveIdParam } });
+    if (!drive) {
+      drive = await prisma.companyDrive.findFirst({
+        where: {
+          OR: [
+            { id: driveIdParam },
+            { companyName: { contains: driveIdParam, mode: "insensitive" } }
+          ]
+        }
+      });
+    }
+    if (!drive) {
+      res.status(404).json({ error: `Company recruitment drive '${driveIdParam}' not found.` });
+      return;
+    }
     const student = await resolveStudent(req.params.studentId);
-    const resolvedStudentId = student?.id || Number(req.params.studentId);
-    const updated = await prisma.driveApplication.upsert({
+    if (!student) {
+      res.status(404).json({ error: `Student candidate '${req.params.studentId}' not found.` });
+      return;
+    }
+    const existing = await prisma.driveApplication.findFirst({
       where: {
-        driveId_studentId: { driveId, studentId: resolvedStudentId }
-      },
-      update: {
-        isShortlistedByCoordinator: Boolean(isShortlisted),
-        ...coordinatorNotes !== void 0 ? { coordinatorNotes } : {}
-      },
-      create: {
-        driveId,
-        studentId: resolvedStudentId,
-        status: "OPTED_IN",
-        isShortlistedByCoordinator: Boolean(isShortlisted),
-        coordinatorNotes: coordinatorNotes || ""
+        driveId: drive.id,
+        studentId: student.id
       }
     });
-    res.json({ application: updated });
+    let updated;
+    if (existing) {
+      updated = await prisma.driveApplication.update({
+        where: { id: existing.id },
+        data: {
+          isShortlistedByCoordinator: Boolean(isShortlisted),
+          ...coordinatorNotes !== void 0 ? { coordinatorNotes } : {}
+        }
+      });
+    } else {
+      updated = await prisma.driveApplication.create({
+        data: {
+          driveId: drive.id,
+          studentId: student.id,
+          status: "OPTED_IN",
+          isShortlistedByCoordinator: Boolean(isShortlisted),
+          coordinatorNotes: coordinatorNotes || ""
+        }
+      });
+    }
+    res.json({ success: true, application: updated });
   } catch (error) {
+    console.error("Error updating applicant shortlist:", error);
     res.status(500).json({ error: error.message || "Failed to update applicant shortlist status" });
   }
 });
