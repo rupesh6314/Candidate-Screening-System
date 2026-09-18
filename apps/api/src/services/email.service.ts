@@ -265,19 +265,36 @@ export function getWelcomeEmailHtml(name: string, email: string, tempPassword: s
   `;
 }
 
+export function formatDeadlineDisplay(deadline: string | Date): string {
+  try {
+    const d = typeof deadline === 'string' ? new Date(deadline) : deadline;
+    if (isNaN(d.getTime())) return String(deadline);
+    return (
+      d.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      }) + ' (IST)'
+    );
+  } catch (_) {
+    return String(deadline);
+  }
+}
+
 export function getDriveAlertEmailHtml(
   name: string,
   companyName: string,
   role: string,
   ctc: string,
-  deadline: string,
+  deadline: string | Date,
   minCgpa: number
 ): string {
   const portalUrl = 'https://candidate-screening-system-api.vercel.app/';
-  const formattedDate = new Date(deadline).toLocaleString('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+  const formattedDate = formatDeadlineDisplay(deadline);
 
   return `
   <!DOCTYPE html>
@@ -310,7 +327,7 @@ export function getDriveAlertEmailHtml(
           <p style="margin: 0 0 6px 0;"><strong>💼 Job Role:</strong> ${role}</p>
           <p style="margin: 0 0 6px 0;"><strong>💰 Package (CTC):</strong> <span style="color: #4ade80;">${ctc}</span></p>
           <p style="margin: 0 0 6px 0;"><strong>🎓 Eligibility Cutoff:</strong> ${minCgpa.toFixed(2)} CGPA</p>
-          <p style="margin: 0;"><strong>⏰ Application Deadline:</strong> <span style="color: #f87171; font-weight: 600;">${formattedDate}</span></p>
+          <p style="margin: 0;"><strong>⏰ Application Deadline:</strong> <span style="color: #f87171; font-weight: 700; font-size: 15px;">${formattedDate}</span></p>
         </div>
 
         <p>Please log in to your Student Placement Portal and submit your <strong>Opt-In</strong> response before the deadline expires.</p>

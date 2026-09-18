@@ -49,11 +49,19 @@ export const PostDriveModal: React.FC<PostDriveModalProps> = ({
     'Online Coding Round (2 hours), Technical Interview 1 (DSA), Technical Interview 2 (System Design), HR Round'
   );
   const [serviceAgreement, setServiceAgreement] = useState('None');
-  // Default deadline 3 days from now at 09:00 AM
+  
+  // Helper to format local Date to YYYY-MM-DDTHH:mm string without UTC timezone shift
+  const toLocalIso = (d: Date): string => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const currentLocalMin = toLocalIso(new Date());
+
+  // Default deadline: 3 days from now at 11:59 PM in local coordinator time
   const defaultDeadlineDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-  defaultDeadlineDate.setHours(9, 0, 0, 0);
-  const defaultDeadlineIso = defaultDeadlineDate.toISOString().slice(0, 16);
-  const [deadline, setDeadline] = useState(defaultDeadlineIso);
+  defaultDeadlineDate.setHours(23, 59, 0, 0);
+  const [deadline, setDeadline] = useState(toLocalIso(defaultDeadlineDate));
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -80,6 +88,18 @@ export const PostDriveModal: React.FC<PostDriveModalProps> = ({
     e.preventDefault();
     if (!companyName.trim() || !role.trim() || !ctc.trim() || !deadline) {
       setError('Company name, role, CTC, and application deadline are mandatory.');
+      return;
+    }
+
+    const selectedDeadline = new Date(deadline);
+    if (isNaN(selectedDeadline.getTime())) {
+      setError('Please provide a valid application deadline date and time.');
+      return;
+    }
+
+    // Strict validation: cannot fix a date/time before the current present moment
+    if (selectedDeadline.getTime() <= Date.now()) {
+      setError('Application deadline cannot be in the past. The coordinator can only fix the deadline from the present date/time onwards.');
       return;
     }
 
@@ -257,12 +277,25 @@ export const PostDriveModal: React.FC<PostDriveModalProps> = ({
                 <input
                   type="datetime-local"
                   className="filter-input"
+                  min={currentLocalMin}
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
                   required
                 />
-                <span className="form-hint">
-                  Strict cut-off time (e.g. 20-09-2026, 09:00 AM). Drive closes automatically after this time.
+                <span className="form-hint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
+                  <span>Strict cut-off date & time. You cannot choose a past date/time.</span>
+                  {deadline && !isNaN(new Date(deadline).getTime()) && (
+                    <strong style={{ color: '#059669', fontSize: '12px' }}>
+                      Selected: {new Date(deadline).toLocaleString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true,
+                      })}
+                    </strong>
+                  )}
                 </span>
               </div>
             </div>
