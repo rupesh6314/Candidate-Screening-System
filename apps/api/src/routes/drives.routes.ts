@@ -26,16 +26,22 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
       const optedInCount = driveApps.filter((a: any) => a.status === 'OPTED_IN').length;
       const optedOutCount = driveApps.filter((a: any) => a.status === 'OPTED_OUT').length;
       const shortlistedCount = driveApps.filter((a: any) => a.status === 'OPTED_IN' && a.isShortlistedByCoordinator).length;
+      const dispatchedCount = driveApps.filter((a: any) => a.sharedWithCompanyAt != null).length;
+      const isDispatched = dispatchedCount > 0;
 
       const isDeadlinePassed = new Date(drive.deadline).getTime() < Date.now();
 
       return {
         ...drive,
+        isDispatched,
+        dispatchedCount,
         stats: {
           eligibleCount,
           optedInCount,
           optedOutCount,
           shortlistedCount,
+          dispatchedCount,
+          isDispatched,
           pendingResponseCount: Math.max(0, eligibleCount - (optedInCount + optedOutCount)),
           isDeadlinePassed,
         },

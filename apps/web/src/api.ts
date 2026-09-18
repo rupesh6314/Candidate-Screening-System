@@ -225,6 +225,8 @@ export interface CompanyDrive {
   startDate: string;
   deadline: string;
   isActive: boolean;
+  isDispatched?: boolean;
+  dispatchedCount?: number;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;
@@ -233,6 +235,8 @@ export interface CompanyDrive {
     optedInCount: number;
     optedOutCount: number;
     shortlistedCount: number;
+    dispatchedCount?: number;
+    isDispatched?: boolean;
     pendingResponseCount: number;
     isDeadlinePassed: boolean;
   };

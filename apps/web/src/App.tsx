@@ -635,7 +635,10 @@ export default function App() {
         onOpenImportModal={() => setIsImportModalOpen(true)}
         onOpenAddModal={() => setIsAddModalOpen(true)}
         onOpenPostDriveModal={() => setIsPostDriveOpen(true)}
-        onOpenDrivesListModal={() => setIsDrivesListOpen(true)}
+        onOpenDrivesListModal={() => {
+          fetchData();
+          setIsDrivesListOpen(true);
+        }}
         onOpenEmailConfigModal={() => setIsEmailConfigOpen(true)}
         onExportCsv={handleExportCsv}
         onResetDataset={handleResetDataset}
@@ -765,7 +768,10 @@ export default function App() {
       <DriveApplicantsModal
         drive={selectedDriveForReview}
         isOpen={selectedDriveForReview !== null}
-        onClose={() => setSelectedDriveForReview(null)}
+        onClose={() => {
+          setSelectedDriveForReview(null);
+          fetchData();
+        }}
         onNotify={showToast}
       />
 

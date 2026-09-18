@@ -4955,12 +4955,117 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .total-drives-count {
   font-size: 13px;
   color: var(--slate-600);
+}
+
+.drives-filter-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--slate-100);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--slate-200);
+  gap: 4px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.drives-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--slate-600);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.drives-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--slate-900);
+}
+
+.drives-tab-btn.active {
+  background: #ffffff;
+  color: var(--primary-700);
+  box-shadow: var(--shadow-sm);
+}
+
+.drives-tab-btn.completed.active {
+  color: #15803d;
+}
+
+.drives-section-wrap {
+  margin-bottom: 24px;
+}
+
+.drives-section-header {
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid var(--slate-200);
+}
+
+.drives-section-header.completed-header {
+  border-bottom-color: #86efac;
+  margin-top: 24px;
+}
+
+.drives-section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.drives-section-title-wrap h3 {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--slate-900);
+  margin: 0;
+}
+
+.section-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+
+.section-dot.blue { background: #2563eb; }
+.section-dot.green { background: #16a34a; }
+
+.section-count-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--primary-50);
+  color: var(--primary-700);
+  border: 1px solid var(--primary-200);
+}
+
+.section-count-badge.green {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #86efac;
+}
+
+.section-subtitle {
+  font-size: 11.5px;
+  color: var(--slate-500);
+  margin: 3px 0 0 0;
+  line-height: 1.4;
 }
 
 .admin-drives-grid {
@@ -4979,6 +5084,48 @@ button {
   gap: 14px;
   box-shadow: var(--shadow-sm);
   transition: all 0.15s ease;
+}
+
+.admin-drive-card.completed-drive-card {
+  border-color: #86efac;
+  background: #fbfdfc;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.08);
+}
+
+.dispatched-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 800;
+  border-radius: var(--radius-full);
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.empty-state-wrap.small {
+  padding: 24px 16px;
+  background: #f8fafc;
+  border: 1px dashed var(--slate-300);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  color: var(--slate-500);
+  margin-bottom: 16px;
+}
+
+.empty-state-wrap.small h4 {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--slate-700);
+  margin: 6px 0 3px 0;
+}
+
+.empty-state-wrap.small p {
+  font-size: 11.5px;
+  margin: 0;
+  color: var(--slate-400);
 }
 
 .admin-drive-card:hover {
