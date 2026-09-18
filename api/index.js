@@ -2082,53 +2082,95 @@ async function sendEmail({ to, subject, text, html }) {
 function getWelcomeEmailHtml(name, email, tempPassword) {
   const portalUrl = "https://candidate-screening-system-api.vercel.app/";
   return `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8">
-    <style>
-      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 20px; }
-      .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; max-width: 580px; margin: 0 auto; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-      .header { background: linear-gradient(135deg, #2563eb, #0284c7); padding: 30px; text-align: center; color: white; }
-      .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
-      .body { padding: 30px; color: #cbd5e1; font-size: 15px; line-height: 1.6; }
-      .credentials-box { background-color: #0f172a; border-left: 4px solid #38bdf8; padding: 16px 20px; border-radius: 6px; margin: 20px 0; }
-      .warning-box { background-color: #451a03; border: 1px solid #b45309; color: #fde68a; padding: 15px 20px; border-radius: 6px; margin: 20px 0; font-size: 13px; }
-      .btn { display: inline-block; background: #2563eb; color: #ffffff !important; text-decoration: none; padding: 14px 34px; border-radius: 8px; font-weight: 700; font-size: 16px; }
-      .footer { background-color: #0f172a; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #334155; }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <div class="header">
-        <h1>\u{1F393} Campus Placement Portal</h1>
-        <p style="margin: 5px 0 0 0; opacity: 0.9;">Official Student Registration Notice</p>
-      </div>
-      <div class="body">
-        <p>Hello <strong>${name}</strong>,</p>
-        <p>Your official student candidate profile has been registered by the Placement Coordinator. You now have access to active recruitment drives, eligibility evaluation, and application tracking.</p>
-        
-        <div class="credentials-box">
-          <p style="margin: 0 0 8px 0; color: #94a3b8; font-size: 13px;">YOUR LOGIN CREDENTIALS:</p>
-          <p style="margin: 0 0 8px 0; font-size: 15px;"><strong>Registered Email:</strong> <span style="color: #38bdf8;">${email}</span></p>
-          <p style="margin: 0; font-size: 15px;"><strong>Temporary Password:</strong> <code style="background: #1e293b; padding: 4px 10px; border-radius: 4px; color: #38bdf8; font-size: 16px; font-weight: 700;">${tempPassword}</code></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Placement Portal - Account Credentials</title>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1e293b;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <!-- Header -->
+    <tr>
+      <td style="background-color: #1e3a8a; padding: 28px 32px; text-align: left; border-bottom: 3px solid #2563eb;">
+        <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #bfdbfe; margin-bottom: 6px;">
+          Office of Career Services & Placements
         </div>
-
-        <div class="warning-box">
-          <strong>\u26A0\uFE0F MANDATORY SAFETY NOTICE:</strong><br/>
-          When you log in for the first time, you must change your temporary password in your student profile settings for account security and safety.
+        <div style="font-size: 20px; font-weight: 700; color: #ffffff; line-height: 1.3;">
+          Student Portal Access Credentials
         </div>
+      </td>
+    </tr>
 
-        <p style="text-align: center; margin: 30px 0 10px 0;">
-          <a href="${portalUrl}" class="btn">Log In to Placement Portal</a>
+    <!-- Body Content -->
+    <tr>
+      <td style="padding: 32px; font-size: 15px; line-height: 1.6; color: #334155;">
+        <p style="margin: 0 0 16px 0; font-size: 16px; color: #0f172a;">
+          Dear <strong>${name}</strong>,
         </p>
-      </div>
-      <div class="footer">
-        \xA9 2026 Campus Placement Cell & Corporate Relations Office. All rights reserved.
-      </div>
-    </div>
-  </body>
-  </html>
+        <p style="margin: 0 0 20px 0; color: #475569;">
+          Your candidate profile has been registered on the official Campus Placement & Recruitment Portal. You may now log in to view active corporate recruitment drives, verify your eligibility, and submit applications.
+        </p>
+
+        <!-- Credentials Table -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin: 20px 0;">
+          <tr>
+            <td colspan="2" style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748b;">
+              Login Credentials
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; font-weight: 600; color: #475569; width: 40%; border-bottom: 1px solid #e2e8f0;">
+              Registered Email:
+            </td>
+            <td style="padding: 12px 16px; color: #0f172a; font-weight: 500; border-bottom: 1px solid #e2e8f0;">
+              ${email}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; font-weight: 600; color: #475569;">
+              Temporary Password:
+            </td>
+            <td style="padding: 12px 16px;">
+              <code style="display: inline-block; background-color: #ffffff; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; font-size: 15px; font-weight: 700; color: #1e40af;">${tempPassword}</code>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Security Notice -->
+        <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 4px; margin: 22px 0; font-size: 14px; color: #92400e; line-height: 1.5;">
+          <strong>Security Notice:</strong> For account safety, you will be required to change this temporary password upon your initial login in your Student Profile Settings.
+        </div>
+
+        <!-- Button -->
+        <div style="text-align: center; margin: 32px 0 16px 0;">
+          <a href="${portalUrl}" style="display: inline-block; background-color: #1d4ed8; color: #ffffff !important; text-decoration: none; padding: 13px 32px; border-radius: 6px; font-size: 15px; font-weight: 600; text-align: center; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+            Access Placement Portal &rarr;
+          </a>
+        </div>
+
+        <p style="margin: 16px 0 0 0; font-size: 12px; color: #64748b; text-align: center; word-break: break-all;">
+          If the button above does not open, navigate directly to: <br/>
+          <a href="${portalUrl}" style="color: #2563eb; text-decoration: underline;">${portalUrl}</a>
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #f8fafc; padding: 20px 32px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.5; text-align: center;">
+        <p style="margin: 0 0 4px 0; font-weight: 600; color: #475569;">
+          Campus Placement & Corporate Relations Cell
+        </p>
+        <p style="margin: 0;">
+          This is an official automated communication. Please do not reply directly to this email.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
   `;
 }
 function formatDeadlineDisplay(deadline) {
@@ -2150,53 +2192,123 @@ function formatDeadlineDisplay(deadline) {
 }
 function getDriveAlertEmailHtml(name, companyName, role, ctc, deadline, minCgpa) {
   const portalUrl = "https://candidate-screening-system-api.vercel.app/";
-  const formattedDate = formatDeadlineDisplay(deadline);
+  const formattedDeadline = formatDeadlineDisplay(deadline);
   return `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8">
-    <style>
-      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 20px; }
-      .card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; max-width: 580px; margin: 0 auto; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-      .header { background: linear-gradient(135deg, #059669, #0284c7); padding: 30px; text-align: center; color: white; }
-      .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
-      .body { padding: 30px; color: #cbd5e1; font-size: 15px; line-height: 1.6; }
-      .drive-box { background-color: #0f172a; border-left: 4px solid #10b981; padding: 18px 20px; border-radius: 6px; margin: 20px 0; }
-      .btn { display: inline-block; background: #059669; color: white !important; text-decoration: none; padding: 14px 34px; border-radius: 8px; font-weight: 700; font-size: 16px; }
-      .footer { background-color: #0f172a; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #334155; }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <div class="header">
-        <h1>\u{1F680} New Campus Placement Drive Alert</h1>
-        <p style="margin: 5px 0 0 0; opacity: 0.9;">You are eligible to apply!</p>
-      </div>
-      <div class="body">
-        <p>Hello <strong>${name}</strong>,</p>
-        <p><strong>${companyName}</strong> has announced a recruitment drive on campus and your academic standing meets all eligibility requirements!</p>
-        
-        <div class="drive-box">
-          <p style="margin: 0 0 6px 0;"><strong>\u{1F3E2} Company:</strong> <span style="color: #38bdf8; font-size: 16px;">${companyName}</span></p>
-          <p style="margin: 0 0 6px 0;"><strong>\u{1F4BC} Job Role:</strong> ${role}</p>
-          <p style="margin: 0 0 6px 0;"><strong>\u{1F4B0} Package (CTC):</strong> <span style="color: #4ade80;">${ctc}</span></p>
-          <p style="margin: 0 0 6px 0;"><strong>\u{1F393} Eligibility Cutoff:</strong> ${minCgpa.toFixed(2)} CGPA</p>
-          <p style="margin: 0;"><strong>\u23F0 Application Deadline:</strong> <span style="color: #f87171; font-weight: 700; font-size: 15px;">${formattedDate}</span></p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Recruitment Drive Announcement - ${companyName}</title>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1e293b;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <!-- Header Banner -->
+    <tr>
+      <td style="background-color: #0f172a; padding: 28px 32px; text-align: left; border-bottom: 3px solid #0284c7;">
+        <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #38bdf8; margin-bottom: 6px;">
+          Office of Career Services & Placements
+        </div>
+        <div style="font-size: 20px; font-weight: 700; color: #ffffff; line-height: 1.3;">
+          Campus Recruitment Drive Announcement
+        </div>
+      </td>
+    </tr>
+
+    <!-- Body Content -->
+    <tr>
+      <td style="padding: 32px; font-size: 15px; line-height: 1.6; color: #334155;">
+        <p style="margin: 0 0 16px 0; font-size: 16px; color: #0f172a;">
+          Dear <strong>${name}</strong>,
+        </p>
+        <p style="margin: 0 0 20px 0; color: #475569;">
+          <strong>${companyName}</strong> has announced its upcoming campus recruitment drive. Based on your current academic record and branch criteria, you meet all eligibility requirements to participate.
+        </p>
+
+        <!-- Drive Details Table -->
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin: 22px 0;">
+          <tr>
+            <td colspan="2" style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748b; background-color: #f1f5f9;">
+              Drive Specifications & Criteria
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; font-weight: 600; color: #475569; width: 42%; border-bottom: 1px solid #e2e8f0;">
+              Company:
+            </td>
+            <td style="padding: 12px 16px; color: #0f172a; font-weight: 700; font-size: 16px; border-bottom: 1px solid #e2e8f0;">
+              ${companyName}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0;">
+              Position / Role:
+            </td>
+            <td style="padding: 12px 16px; color: #1e293b; font-weight: 600; border-bottom: 1px solid #e2e8f0;">
+              ${role}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0;">
+              Compensation (CTC):
+            </td>
+            <td style="padding: 12px 16px; color: #047857; font-weight: 700; border-bottom: 1px solid #e2e8f0;">
+              ${ctc}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0;">
+              Academic Eligibility:
+            </td>
+            <td style="padding: 12px 16px; color: #334155; border-bottom: 1px solid #e2e8f0;">
+              Minimum ${minCgpa.toFixed(2)} CGPA
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 16px; font-weight: 600; color: #475569;">
+              Application Deadline:
+            </td>
+            <td style="padding: 12px 16px;">
+              <span style="display: inline-block; background-color: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 14px;">
+                ${formattedDeadline}
+              </span>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Action Notice -->
+        <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 14px 18px; border-radius: 4px; margin: 22px 0; font-size: 14px; color: #1e40af; line-height: 1.5;">
+          <strong>Action Required:</strong> Please log in to your Student Placement Portal and record your <strong>Opt-In</strong> response before the registration window closes.
         </div>
 
-        <p>Please log in to your Student Placement Portal and submit your <strong>Opt-In</strong> response before the deadline expires.</p>
+        <!-- Button -->
+        <div style="text-align: center; margin: 32px 0 16px 0;">
+          <a href="${portalUrl}" style="display: inline-block; background-color: #0284c7; color: #ffffff !important; text-decoration: none; padding: 13px 32px; border-radius: 6px; font-size: 15px; font-weight: 600; text-align: center; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+            View Drive & Submit Opt-In &rarr;
+          </a>
+        </div>
 
-        <p style="text-align: center; margin: 30px 0 10px 0;">
-          <a href="${portalUrl}" class="btn">Log In to Placement Portal</a>
+        <p style="margin: 16px 0 0 0; font-size: 12px; color: #64748b; text-align: center; word-break: break-all;">
+          If the button above does not open, navigate directly to: <br/>
+          <a href="${portalUrl}" style="color: #0284c7; text-decoration: underline;">${portalUrl}</a>
         </p>
-      </div>
-      <div class="footer">
-        \xA9 2026 Campus Placement Cell & Corporate Relations Office. All rights reserved.
-      </div>
-    </div>
-  </body>
-  </html>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #f8fafc; padding: 20px 32px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.5; text-align: center;">
+        <p style="margin: 0 0 4px 0; font-weight: 600; color: #475569;">
+          Campus Placement & Corporate Relations Cell
+        </p>
+        <p style="margin: 0;">
+          This is an official automated communication. Please do not reply directly to this email.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
   `;
 }
 
@@ -2849,19 +2961,19 @@ router2.post(
         }
       });
       const portalUrl = "https://candidate-screening-system-api.vercel.app/";
-      const welcomeSubject = "\u{1F393} Welcome to Campus Placement Portal - Your Login Credentials";
-      const welcomeMessage = `Hello ${created.name},
+      const welcomeSubject = "Campus Placement Portal - Student Account Credentials";
+      const welcomeMessage = `Dear ${created.name},
 
-Your official campus placement student account has been registered by the Placement Coordinator.
+Your candidate profile has been registered on the official Campus Placement & Recruitment Portal.
 
-Here are your login credentials:
+Login Credentials:
 \u2022 Registered Email: ${created.email}
 \u2022 Temporary Password: ${tempPassword}
 
-\u26A0\uFE0F MANDATORY SAFETY NOTICE:
-When you log in for the first time, you must change your password immediately in your student profile settings for account security and safety.
+Security Notice:
+For account safety, you will be required to change this temporary password upon your initial login in your Student Profile Settings.
 
-Please click "Log In to Placement Portal" in the email to access your account.`;
+Please access the portal at: ${portalUrl}`;
       try {
         await prisma.studentNotification.create({
           data: {
@@ -3565,9 +3677,60 @@ router7.post(
       }
       const result = await sendEmail({
         to,
-        subject: "\u{1F9EA} Campus Placement Portal - SMTP Email Delivery Test",
+        subject: "Campus Placement Portal - Email Delivery Verification",
         text: "Hello,\n\nThis is a verification test email from your Campus Placement & Screening Portal.\n\nYour SMTP credentials are configured and functioning properly. Candidate registration welcome emails and campus recruitment drive notifications will now be delivered directly to student inboxes.\n\nPortal Link: https://candidate-screening-system-api.vercel.app/\nTimestamp: " + (/* @__PURE__ */ new Date()).toISOString(),
-        html: '<div style="font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px; max-width: 500px; margin: 0 auto;"><h2 style="color: #38bdf8; margin-top: 0;">\u{1F9EA} SMTP Delivery Verification</h2><p>Hello,</p><p>Your <strong>Campus Placement Portal</strong> email service is configured and operational!</p><div style="background: #1e293b; padding: 12px 16px; border-left: 4px solid #10b981; border-radius: 6px; margin: 16px 0;">\u2705 <strong>Status:</strong> Live SMTP Dispatched Successfully<br/>\u23F0 <strong>Verified At:</strong> ' + (/* @__PURE__ */ new Date()).toLocaleString() + '</div><p><a href="https://candidate-screening-system-api.vercel.app/" style="display: inline-block; background: #4f46e5; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">Open Portal (https://candidate-screening-system-api.vercel.app/)</a></p><p style="font-size: 13px; color: #94a3b8;">When you register candidates, their login credentials and security notices will be sent directly to their verified email.</p></div>'
+        html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMTP Delivery Verification</title>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <tr>
+      <td style="background-color: #1e3a8a; padding: 24px 28px; text-align: left; border-bottom: 3px solid #2563eb;">
+        <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #bfdbfe; margin-bottom: 4px;">
+          System Configuration Test
+        </div>
+        <div style="font-size: 18px; font-weight: 700; color: #ffffff;">
+          SMTP Email Delivery Verification
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 28px; font-size: 14px; line-height: 1.6; color: #334155;">
+        <p style="margin: 0 0 14px 0; font-size: 15px; color: #0f172a;">
+          Hello Administrator,
+        </p>
+        <p style="margin: 0 0 18px 0; color: #475569;">
+          Your <strong>Campus Placement Portal</strong> email service is configured correctly and verified operational.
+        </p>
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; margin: 18px 0;">
+          <tr>
+            <td style="padding: 14px 18px; color: #166534; font-size: 14px;">
+              <strong>Delivery Status:</strong> SMTP Dispatched Successfully<br/>
+              <strong>Verified At:</strong> ${(/* @__PURE__ */ new Date()).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} (IST)
+            </td>
+          </tr>
+        </table>
+        <div style="text-align: center; margin: 24px 0 12px 0;">
+          <a href="https://candidate-screening-system-api.vercel.app/" style="display: inline-block; background-color: #1d4ed8; color: #ffffff !important; text-decoration: none; padding: 11px 26px; border-radius: 6px; font-size: 14px; font-weight: 600;">
+            Open Placement Portal &rarr;
+          </a>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #f8fafc; padding: 16px 28px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; text-align: center;">
+        Campus Placement & Corporate Relations Cell \u2022 Automated Dispatch System
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `
       });
       if (!result.success) {
         return res.status(400).json({
@@ -3687,17 +3850,16 @@ router8.post("/", async (req, res) => {
       studentEmail: student.email,
       driveId: newDrive.id,
       companyName: newDrive.companyName,
-      subject: `\u{1F3AF} Campus Placement Alert: ${newDrive.companyName} (${newDrive.role}) Drive Active!`,
+      subject: `Campus Recruitment Drive: ${newDrive.companyName} (${newDrive.role})`,
       message: `Dear ${student.name},
 
-You are eligible for the upcoming ${newDrive.companyName} campus placement drive for the role of "${newDrive.role}".
+You are eligible for the upcoming campus recruitment drive by ${newDrive.companyName} for the role of ${newDrive.role}.
 
-\u2022 Package / CTC: ${newDrive.ctc}
-\u2022 Monthly Stipend: ${newDrive.stipend}
+\u2022 Package (CTC): ${newDrive.ctc}
 \u2022 Minimum CGPA Required: ${newDrive.minCgpa}
-\u2022 Application Window: Active until ${deadlineFormatted}
+\u2022 Registration Deadline: ${deadlineFormatted} (IST)
 
-Please log in to your Student Placement Portal and submit your Opt-In response before the strict deadline!`,
+Please log in to your Student Placement Portal and record your Opt-In response before the registration window closes.`,
       minCgpa: minCgpaNum,
       deadline: driveDeadline,
       isRead: false
@@ -3709,16 +3871,16 @@ Please log in to your Student Placement Portal and submit your Opt-In response b
           eligibleStudents.map(
             (st) => sendEmail({
               to: st.email,
-              subject: `\u{1F3AF} Campus Placement Alert: ${newDrive.companyName} (${newDrive.role}) Drive Active!`,
+              subject: `Campus Recruitment Drive: ${newDrive.companyName} (${newDrive.role})`,
               text: `Dear ${st.name},
 
-You are eligible for the upcoming ${newDrive.companyName} campus placement drive for the role of "${newDrive.role}".
+You are eligible for the upcoming campus recruitment drive by ${newDrive.companyName} for the role of ${newDrive.role}.
 
-\u2022 Package / CTC: ${newDrive.ctc}
+\u2022 Package (CTC): ${newDrive.ctc}
 \u2022 Minimum CGPA Required: ${newDrive.minCgpa}
-\u2022 Application Window: Active until ${deadlineFormatted}
+\u2022 Registration Deadline: ${deadlineFormatted} (IST)
 
-Please log in to your Student Placement Portal and submit your Opt-In response!`,
+Please log in to your Student Placement Portal and record your Opt-In response!`,
               html: getDriveAlertEmailHtml(
                 st.name,
                 newDrive.companyName,

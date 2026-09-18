@@ -741,19 +741,19 @@ router.post(
 
       // Dispatch automated welcome and password credentials email notification to student's inbox
       const portalUrl = 'https://candidate-screening-system-api.vercel.app/';
-      const welcomeSubject = '🎓 Welcome to Campus Placement Portal - Your Login Credentials';
-      const welcomeMessage = `Hello ${created.name},
+      const welcomeSubject = 'Campus Placement Portal - Student Account Credentials';
+      const welcomeMessage = `Dear ${created.name},
 
-Your official campus placement student account has been registered by the Placement Coordinator.
+Your candidate profile has been registered on the official Campus Placement & Recruitment Portal.
 
-Here are your login credentials:
+Login Credentials:
 • Registered Email: ${created.email}
 • Temporary Password: ${tempPassword}
 
-⚠️ MANDATORY SAFETY NOTICE:
-When you log in for the first time, you must change your password immediately in your student profile settings for account security and safety.
+Security Notice:
+For account safety, you will be required to change this temporary password upon your initial login in your Student Profile Settings.
 
-Please click "Log In to Placement Portal" in the email to access your account.`;
+Please access the portal at: ${portalUrl}`;
 
       try {
         await prisma.studentNotification.create({

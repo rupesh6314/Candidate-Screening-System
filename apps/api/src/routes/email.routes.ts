@@ -80,9 +80,60 @@ router.post(
 
       const result = await sendEmail({
         to,
-        subject: '🧪 Campus Placement Portal - SMTP Email Delivery Test',
+        subject: 'Campus Placement Portal - Email Delivery Verification',
         text: 'Hello,\n\nThis is a verification test email from your Campus Placement & Screening Portal.\n\nYour SMTP credentials are configured and functioning properly. Candidate registration welcome emails and campus recruitment drive notifications will now be delivered directly to student inboxes.\n\nPortal Link: https://candidate-screening-system-api.vercel.app/\nTimestamp: ' + new Date().toISOString(),
-        html: '<div style="font-family: sans-serif; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px; max-width: 500px; margin: 0 auto;"><h2 style="color: #38bdf8; margin-top: 0;">🧪 SMTP Delivery Verification</h2><p>Hello,</p><p>Your <strong>Campus Placement Portal</strong> email service is configured and operational!</p><div style="background: #1e293b; padding: 12px 16px; border-left: 4px solid #10b981; border-radius: 6px; margin: 16px 0;">✅ <strong>Status:</strong> Live SMTP Dispatched Successfully<br/>⏰ <strong>Verified At:</strong> ' + new Date().toLocaleString() + '</div><p><a href="https://candidate-screening-system-api.vercel.app/" style="display: inline-block; background: #4f46e5; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">Open Portal (https://candidate-screening-system-api.vercel.app/)</a></p><p style="font-size: 13px; color: #94a3b8;">When you register candidates, their login credentials and security notices will be sent directly to their verified email.</p></div>',
+        html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMTP Delivery Verification</title>
+</head>
+<body style="margin: 0; padding: 24px 12px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <tr>
+      <td style="background-color: #1e3a8a; padding: 24px 28px; text-align: left; border-bottom: 3px solid #2563eb;">
+        <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #bfdbfe; margin-bottom: 4px;">
+          System Configuration Test
+        </div>
+        <div style="font-size: 18px; font-weight: 700; color: #ffffff;">
+          SMTP Email Delivery Verification
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 28px; font-size: 14px; line-height: 1.6; color: #334155;">
+        <p style="margin: 0 0 14px 0; font-size: 15px; color: #0f172a;">
+          Hello Administrator,
+        </p>
+        <p style="margin: 0 0 18px 0; color: #475569;">
+          Your <strong>Campus Placement Portal</strong> email service is configured correctly and verified operational.
+        </p>
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; margin: 18px 0;">
+          <tr>
+            <td style="padding: 14px 18px; color: #166534; font-size: 14px;">
+              <strong>Delivery Status:</strong> SMTP Dispatched Successfully<br/>
+              <strong>Verified At:</strong> ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (IST)
+            </td>
+          </tr>
+        </table>
+        <div style="text-align: center; margin: 24px 0 12px 0;">
+          <a href="https://candidate-screening-system-api.vercel.app/" style="display: inline-block; background-color: #1d4ed8; color: #ffffff !important; text-decoration: none; padding: 11px 26px; border-radius: 6px; font-size: 14px; font-weight: 600;">
+            Open Placement Portal &rarr;
+          </a>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #f8fafc; padding: 16px 28px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; text-align: center;">
+        Campus Placement & Corporate Relations Cell • Automated Dispatch System
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
       });
 
       if (!result.success) {

@@ -127,8 +127,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       studentEmail: student.email,
       driveId: newDrive.id,
       companyName: newDrive.companyName,
-      subject: `🎯 Campus Placement Alert: ${newDrive.companyName} (${newDrive.role}) Drive Active!`,
-      message: `Dear ${student.name},\n\nYou are eligible for the upcoming ${newDrive.companyName} campus placement drive for the role of "${newDrive.role}".\n\n• Package / CTC: ${newDrive.ctc}\n• Monthly Stipend: ${newDrive.stipend}\n• Minimum CGPA Required: ${newDrive.minCgpa}\n• Application Window: Active until ${deadlineFormatted}\n\nPlease log in to your Student Placement Portal and submit your Opt-In response before the strict deadline!`,
+      subject: `Campus Recruitment Drive: ${newDrive.companyName} (${newDrive.role})`,
+      message: `Dear ${student.name},\n\nYou are eligible for the upcoming campus recruitment drive by ${newDrive.companyName} for the role of ${newDrive.role}.\n\n• Package (CTC): ${newDrive.ctc}\n• Minimum CGPA Required: ${newDrive.minCgpa}\n• Registration Deadline: ${deadlineFormatted} (IST)\n\nPlease log in to your Student Placement Portal and record your Opt-In response before the registration window closes.`,
       minCgpa: minCgpaNum,
       deadline: driveDeadline,
       isRead: false,
@@ -143,8 +143,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           eligibleStudents.map((st: any) =>
             sendEmail({
               to: st.email,
-              subject: `🎯 Campus Placement Alert: ${newDrive.companyName} (${newDrive.role}) Drive Active!`,
-              text: `Dear ${st.name},\n\nYou are eligible for the upcoming ${newDrive.companyName} campus placement drive for the role of "${newDrive.role}".\n\n• Package / CTC: ${newDrive.ctc}\n• Minimum CGPA Required: ${newDrive.minCgpa}\n• Application Window: Active until ${deadlineFormatted}\n\nPlease log in to your Student Placement Portal and submit your Opt-In response!`,
+              subject: `Campus Recruitment Drive: ${newDrive.companyName} (${newDrive.role})`,
+              text: `Dear ${st.name},\n\nYou are eligible for the upcoming campus recruitment drive by ${newDrive.companyName} for the role of ${newDrive.role}.\n\n• Package (CTC): ${newDrive.ctc}\n• Minimum CGPA Required: ${newDrive.minCgpa}\n• Registration Deadline: ${deadlineFormatted} (IST)\n\nPlease log in to your Student Placement Portal and record your Opt-In response!`,
               html: getDriveAlertEmailHtml(
                 st.name,
                 newDrive.companyName,
