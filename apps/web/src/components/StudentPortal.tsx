@@ -275,66 +275,69 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
 
               {/* Notification Dropdown */}
               {showNotifications && (
-                <div className="notifications-dropdown-menu">
-                  <div className="notif-dropdown-header">
-                    <h4>
-                      <Bell size={15} /> Placement Email Alerts ({notifications.length})
-                    </h4>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {notifications.length > 0 && (
+                <>
+                  <div className="notif-backdrop" onClick={() => setShowNotifications(false)} />
+                  <div className="notifications-dropdown-menu">
+                    <div className="notif-dropdown-header">
+                      <h4>
+                        <Bell size={15} /> Placement Email Alerts ({notifications.length})
+                      </h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {notifications.length > 0 && (
+                          <button
+                            type="button"
+                            className="btn-filter-action outline"
+                            style={{ padding: '2px 8px', fontSize: '11px', height: 'auto' }}
+                            onClick={() => setNotifications([])}
+                            title="Clear all alerts"
+                          >
+                            Clear
+                          </button>
+                        )}
                         <button
                           type="button"
-                          className="btn-filter-action outline"
-                          style={{ padding: '2px 8px', fontSize: '11px', height: 'auto' }}
-                          onClick={() => setNotifications([])}
-                          title="Clear all alerts"
+                          className="btn-close-notifs"
+                          onClick={() => setShowNotifications(false)}
                         >
-                          Clear
+                          ✕
                         </button>
+                      </div>
+                    </div>
+                    <div className="notif-dropdown-list">
+                      {notifications.length === 0 ? (
+                        <div className="notif-empty" style={{ padding: '24px 16px', textAlign: 'center', color: '#64748b' }}>
+                          <Bell size={24} style={{ opacity: 0.4, margin: '0 auto 8px auto', display: 'block' }} />
+                          <p style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+                            No New Placement Alerts
+                          </p>
+                          <p style={{ margin: 0, fontSize: '11.5px', color: '#94a3b8' }}>
+                            You will receive real-time notifications here when new company drives matching your CGPA are announced.
+                          </p>
+                        </div>
+                      ) : (
+                        notifications.map((n, idx) => (
+                          <div key={n.id || `notif-${idx}`} className="notif-item">
+                            <div className="notif-item-header">
+                              <span className="notif-company">{n.companyName || 'Campus Placement Cell'}</span>
+                              <span className="notif-time">
+                                {n.sentAt
+                                  ? new Date(n.sentAt).toLocaleDateString('en-IN', {
+                                      day: '2-digit',
+                                      month: 'short',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })
+                                  : 'Recent'}
+                              </span>
+                            </div>
+                            <h5 className="notif-subject">{n.subject}</h5>
+                            <p className="notif-body" style={{ whiteSpace: 'pre-line', margin: '4px 0 0 0', lineHeight: 1.45 }}>{n.message}</p>
+                          </div>
+                        ))
                       )}
-                      <button
-                        type="button"
-                        className="btn-close-notifs"
-                        onClick={() => setShowNotifications(false)}
-                      >
-                        ✕
-                      </button>
                     </div>
                   </div>
-                  <div className="notif-dropdown-list">
-                    {notifications.length === 0 ? (
-                      <div className="notif-empty" style={{ padding: '24px 16px', textAlign: 'center', color: '#64748b' }}>
-                        <Bell size={24} style={{ opacity: 0.4, margin: '0 auto 8px auto', display: 'block' }} />
-                        <p style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: 600, color: '#334155' }}>
-                          No New Placement Alerts
-                        </p>
-                        <p style={{ margin: 0, fontSize: '11.5px', color: '#94a3b8' }}>
-                          You will receive real-time notifications here when new company drives matching your CGPA are announced.
-                        </p>
-                      </div>
-                    ) : (
-                      notifications.map((n, idx) => (
-                        <div key={n.id || `notif-${idx}`} className="notif-item">
-                          <div className="notif-item-header">
-                            <span className="notif-company">{n.companyName || 'Campus Placement Cell'}</span>
-                            <span className="notif-time">
-                              {n.sentAt
-                                ? new Date(n.sentAt).toLocaleDateString('en-IN', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })
-                                : 'Recent'}
-                            </span>
-                          </div>
-                          <h5 className="notif-subject">{n.subject}</h5>
-                          <p className="notif-body" style={{ whiteSpace: 'pre-line', margin: '4px 0 0 0', lineHeight: 1.45 }}>{n.message}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                </>
               )}
             </div>
           </div>
