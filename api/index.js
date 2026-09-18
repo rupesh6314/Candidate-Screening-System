@@ -3815,12 +3815,22 @@ router8.patch("/:id/applicants/:studentId", async (req, res) => {
   try {
     const { isShortlisted, coordinatorNotes } = req.body;
     const driveId = req.params.id;
-    const studentId = Number(req.params.studentId);
-    const updated = await prisma.driveApplication.update({
-      where: { driveId, studentId },
-      data: {
+    const student = await resolveStudent(req.params.studentId);
+    const resolvedStudentId = student?.id || Number(req.params.studentId);
+    const updated = await prisma.driveApplication.upsert({
+      where: {
+        driveId_studentId: { driveId, studentId: resolvedStudentId }
+      },
+      update: {
         isShortlistedByCoordinator: Boolean(isShortlisted),
         ...coordinatorNotes !== void 0 ? { coordinatorNotes } : {}
+      },
+      create: {
+        driveId,
+        studentId: resolvedStudentId,
+        status: "OPTED_IN",
+        isShortlistedByCoordinator: Boolean(isShortlisted),
+        coordinatorNotes: coordinatorNotes || ""
       }
     });
     res.json({ application: updated });

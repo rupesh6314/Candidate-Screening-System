@@ -270,13 +270,23 @@ router.patch('/:id/applicants/:studentId', async (req: Request, res: Response): 
   try {
     const { isShortlisted, coordinatorNotes } = req.body;
     const driveId = req.params.id;
-    const studentId = Number(req.params.studentId);
+    const student = await resolveStudent(req.params.studentId);
+    const resolvedStudentId = student?.id || Number(req.params.studentId);
 
-    const updated = await prisma.driveApplication.update({
-      where: { driveId, studentId },
-      data: {
+    const updated = await prisma.driveApplication.upsert({
+      where: {
+        driveId_studentId: { driveId, studentId: resolvedStudentId },
+      },
+      update: {
         isShortlistedByCoordinator: Boolean(isShortlisted),
         ...(coordinatorNotes !== undefined ? { coordinatorNotes } : {}),
+      },
+      create: {
+        driveId,
+        studentId: resolvedStudentId,
+        status: 'OPTED_IN',
+        isShortlistedByCoordinator: Boolean(isShortlisted),
+        coordinatorNotes: coordinatorNotes || '',
       },
     });
 
