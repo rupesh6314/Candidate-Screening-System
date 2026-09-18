@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   GraduationCap,
   ShieldCheck,
   Lock,
-  Sparkles,
   ArrowRight,
-  Building2,
-  CheckCircle2,
-  KeyRound,
-  Users,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { api, Student } from '../api';
 
@@ -20,6 +17,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [roleTab, setRoleTab] = useState<'COORDINATOR' | 'STUDENT'>('COORDINATOR');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,6 +26,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setError('');
     setEmail('');
     setPassword('');
+    setShowPassword(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,14 +112,42 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
             <div className="form-group mb-4">
               <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="filter-input"
-                placeholder="Enter your password..."
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="filter-input"
+                  style={{ paddingRight: '42px' }}
+                  placeholder="Enter your password..."
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <span style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                {roleTab === 'STUDENT'
+                  ? 'Use the temporary password received in your email (or your updated password).'
+                  : 'Enter coordinator administrative credentials.'}
+              </span>
             </div>
 
             <button type="submit" className="btn btn-primary btn-full-width login-submit-btn" disabled={loading}>
