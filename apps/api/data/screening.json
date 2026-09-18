@@ -21,13 +21,601 @@
   ],
   "students": [
     {
+      "id": 16,
+      "externalId": "TEST-101",
+      "name": "John Test",
+      "email": "johntest@test.com",
+      "phone": null,
+      "branch": "Computer Science",
+      "cgpa": "8.5",
+      "skills": [
+        "React",
+        "Node.js"
+      ],
+      "projects": [
+        "Project 1"
+      ],
+      "internships": [],
+      "certifications": [],
+      "score": 4,
+      "category": "NEEDS_IMPROVEMENT",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$5Zcb3ZvVaQxeU8.d5hNabunntRuChM.glbhPOf85pym06uMNFOhZq",
+      "mustChangePassword": true,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=John%20Test",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-TEST-101/view",
+      "bio": "Final year Computer Science undergraduate candidate.",
+      "createdAt": "2026-09-17T15:51:07.277Z",
+      "updatedAt": "2026-09-17T15:51:07.277Z"
+    },
+    {
+      "id": 2,
+      "externalId": "2",
+      "name": "Ishita Verma",
+      "email": "ishita.v21@gmail.com",
+      "phone": "8765432109",
+      "branch": "Information Technology",
+      "cgpa": "8.9",
+      "skills": [
+        "React",
+        "Node.js",
+        "MongoDB"
+      ],
+      "projects": [
+        "Task Management System"
+      ],
+      "internships": [
+        "Frontend Intern at TCS"
+      ],
+      "certifications": [
+        "Google UX Design"
+      ],
+      "score": 7,
+      "category": "AVERAGE",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$DqCUSYKBwcutluzZvfkuE.myF4z/syIYUVbonO2YoSuAdfNPRiTZe",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ishita%20Verma",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-2/view",
+      "bio": "Final year Information Technology undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:09.296Z",
+      "updatedAt": "2026-09-17T17:39:52.488Z"
+    },
+    {
+      "id": 3,
+      "externalId": "3",
+      "name": "Rohan Nair",
+      "email": "rnair.dev@gmail.com",
+      "phone": "7654321098",
+      "branch": "Computer Science",
+      "cgpa": "9.1",
+      "skills": [
+        "Python",
+        "Django",
+        "React"
+      ],
+      "projects": [
+        "Social Media Dashboard",
+        "Portfolio App"
+      ],
+      "internships": [
+        "Web Dev Intern at Infosys"
+      ],
+      "certifications": [
+        "IBM Full Stack Software Developer"
+      ],
+      "score": 8,
+      "category": "STRONG",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$s0aDSQpsobD5ydMeaHV9wugDP76V8iu5XlRXa7eqZ0K6YdpLO70DK",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan%20Nair",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-3/view",
+      "bio": "Final year Computer Science undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:09.784Z",
+      "updatedAt": "2026-09-17T17:39:53.043Z"
+    },
+    {
+      "id": 4,
+      "externalId": "4",
+      "name": "Megha Sharma",
+      "email": "megha.sharma99@gmail.com",
+      "phone": "6543210987",
+      "branch": "Software Engineering",
+      "cgpa": "8.5",
+      "skills": [
+        "Java",
+        "Spring Boot",
+        "React"
+      ],
+      "projects": [
+        "Inventory Management System"
+      ],
+      "internships": [
+        "Java Developer Intern at Wipro"
+      ],
+      "certifications": [
+        "Oracle Certified Associate"
+      ],
+      "score": 7,
+      "category": "AVERAGE",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$0g0d0N3OKMFkXdU/cDsGZuQe.RcPaWv9aB6efHkZ2wokw6uOEjyXW",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Megha%20Sharma",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-4/view",
+      "bio": "Final year Software Engineering undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:10.182Z",
+      "updatedAt": "2026-09-17T17:39:53.518Z"
+    },
+    {
+      "id": 5,
+      "externalId": "5",
+      "name": "Karthik Reddy",
+      "email": "karthik.r@gmail.com",
+      "phone": "9012345678",
+      "branch": "Computer Science",
+      "cgpa": "8.2",
+      "skills": [
+        "JavaScript",
+        "Express",
+        "SQL"
+      ],
+      "projects": [
+        "Weather App",
+        "Blog Platform"
+      ],
+      "internships": [
+        "Software Intern at Tech Mahindra"
+      ],
+      "certifications": [
+        "HackerRank JavaScript (Basic)"
+      ],
+      "score": 7,
+      "category": "AVERAGE",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$.czfqbC6.N.xDla.xJhKGuT86nrvEolj2brHYXe7JcFt.ZUQrt8OS",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Karthik%20Reddy",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-5/view",
+      "bio": "Final year Computer Science undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:10.752Z",
+      "updatedAt": "2026-09-17T17:39:54.060Z"
+    },
+    {
+      "id": 6,
+      "externalId": "6",
+      "name": "Sneha Desai",
+      "email": "snehad.22@gmail.com",
+      "phone": "8123456790",
+      "branch": "Electronics",
+      "cgpa": "7.6",
+      "skills": [
+        "HTML",
+        "CSS",
+        "JavaScript"
+      ],
+      "projects": [
+        "Personal Website"
+      ],
+      "internships": [],
+      "certifications": [],
+      "score": 4,
+      "category": "NEEDS_IMPROVEMENT",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$p77WtXRsBzXSmf0744TzNeKbeHY8GKjJ/PwagKeEcPl4FlQNhvEBq",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sneha%20Desai",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-6/view",
+      "bio": "Final year Electronics undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:11.233Z",
+      "updatedAt": "2026-09-17T17:39:54.548Z"
+    },
+    {
+      "id": 7,
+      "externalId": "7",
+      "name": "Aditya Kumar",
+      "email": "aditya.k45@gmail.com",
+      "phone": "9123456781",
+      "branch": "Mechanical",
+      "cgpa": "7.1",
+      "skills": [
+        "Python",
+        "SQL"
+      ],
+      "projects": [
+        "Data Analysis on Sales Data"
+      ],
+      "internships": [],
+      "certifications": [
+        "Google Data Analytics"
+      ],
+      "score": 4,
+      "category": "NEEDS_IMPROVEMENT",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$NiimMreRSHBzTW2WQrBJ4.xzkc4APAKXYVCSuqycKZrJVM8h0w9My",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Aditya%20Kumar",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-7/view",
+      "bio": "Final year Mechanical undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:11.780Z",
+      "updatedAt": "2026-09-17T17:39:55.460Z"
+    },
+    {
+      "id": 8,
+      "externalId": "8",
+      "name": "Neha Singh",
+      "email": "nehasingh.01@gmail.com",
+      "phone": "7123456789",
+      "branch": "Information Technology",
+      "cgpa": "7.8",
+      "skills": [
+        "Java",
+        "HTML",
+        "CSS"
+      ],
+      "projects": [
+        "Library Management System"
+      ],
+      "internships": [
+        "Trainee at WebX"
+      ],
+      "certifications": [],
+      "score": 5,
+      "category": "AVERAGE",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$XtVaTO0QkPRw3KZClHWFoOKyH0QHlAyydB3h.iczp0lnqzKzRjhKe",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Neha%20Singh",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-8/view",
+      "bio": "Final year Information Technology undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:12.223Z",
+      "updatedAt": "2026-09-17T17:39:55.960Z"
+    },
+    {
+      "id": 9,
+      "externalId": "9",
+      "name": "Vivek Joshi",
+      "email": "vivek.j@gmail.com",
+      "phone": "8234567890",
+      "branch": "Computer Science",
+      "cgpa": "6.9",
+      "skills": [
+        "C++",
+        "HTML"
+      ],
+      "projects": [
+        "Calculator App"
+      ],
+      "internships": [],
+      "certifications": [],
+      "score": 2,
+      "category": "NEEDS_IMPROVEMENT",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$4jPS9S9iYGb8dTwPtwNui.fHfVn3ujKiDp9j9qMxDvkKkz23zkSS2",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Vivek%20Joshi",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-9/view",
+      "bio": "Final year Computer Science undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:12.638Z",
+      "updatedAt": "2026-09-17T17:39:56.373Z"
+    },
+    {
+      "id": 10,
+      "externalId": "10",
+      "name": "Pooja Patel",
+      "email": "poojap.tech@gmail.com",
+      "phone": "9345678901",
+      "branch": "Civil",
+      "cgpa": "7.4",
+      "skills": [
+        "Python",
+        "Excel"
+      ],
+      "projects": [
+        "Student Database System"
+      ],
+      "internships": [],
+      "certifications": [],
+      "score": 3,
+      "category": "NEEDS_IMPROVEMENT",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$a0sZHiu4INGy8XLCM.fZB.zMzQu/CWUCiuWo.w/gWZhj.4vNWQ51S",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Pooja%20Patel",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-10/view",
+      "bio": "Final year Civil undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:13.054Z",
+      "updatedAt": "2026-09-17T17:39:56.826Z"
+    },
+    {
+      "id": 11,
+      "externalId": "11",
+      "name": "Amit Chawla",
+      "email": "amit.c00@gmail.com",
+      "phone": "9456789012",
+      "branch": "Civil",
+      "cgpa": "5.9",
+      "skills": [
+        "MS Word"
+      ],
+      "projects": [],
+      "internships": [],
+      "certifications": [],
+      "score": 0,
+      "category": "NEEDS_IMPROVEMENT",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$RBG6D2MwZuS8k2L49YVDQ.i9yWNfsh3vqU59yg8GbuH6xnGtijZNm",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Amit%20Chawla",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-11/view",
+      "bio": "Final year Civil undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:13.488Z",
+      "updatedAt": "2026-09-17T17:39:57.280Z"
+    },
+    {
+      "id": 12,
+      "externalId": "12",
+      "name": "Suman Rao",
+      "email": "suman.rao1@gmail.com",
+      "phone": "8567890123",
+      "branch": "Mechanical",
+      "cgpa": "6.1",
+      "skills": [
+        "Windows",
+        "Data Entry"
+      ],
+      "projects": [
+        "Basic HTML Page"
+      ],
+      "internships": [],
+      "certifications": [],
+      "score": 2,
+      "category": "NEEDS_IMPROVEMENT",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$edsUAE05Q/P1GTonsvoBo.h4mmHDB561a.wEQ6gP/YOSUIDAesTYG",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Suman%20Rao",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-12/view",
+      "bio": "Final year Mechanical undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:13.999Z",
+      "updatedAt": "2026-09-17T17:39:57.708Z"
+    },
+    {
+      "id": 13,
+      "externalId": "13",
+      "name": "Deepak Tiwari",
+      "email": "deepakt.77@gmail.com",
+      "phone": "7678901234",
+      "branch": "Electronics",
+      "cgpa": "5.4",
+      "skills": [
+        "MS Excel"
+      ],
+      "projects": [],
+      "internships": [],
+      "certifications": [],
+      "score": 0,
+      "category": "NEEDS_IMPROVEMENT",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$MyQqEKVQQmfDxKmzqTuXeudegUYb7wzckfrN8GJWICTlSNw19Q0E6",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Deepak%20Tiwari",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-13/view",
+      "bio": "Final year Electronics undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:14.534Z",
+      "updatedAt": "2026-09-17T17:39:58.100Z"
+    },
+    {
+      "id": 14,
+      "externalId": "14",
+      "name": "Meera Reddy",
+      "email": "meera.r3@gmail.com",
+      "phone": "9789012345",
+      "branch": "Chemical",
+      "cgpa": "6.3",
+      "skills": [
+        "Basic Computer"
+      ],
+      "projects": [],
+      "internships": [],
+      "certifications": [],
+      "score": 1,
+      "category": "NEEDS_IMPROVEMENT",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$jejh8gyevxW3.LcogGR.s.kBp60LfddjmGH5AIDzs9z3Aa7L23h/e",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Meera%20Reddy",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-14/view",
+      "bio": "Final year Chemical undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:15.045Z",
+      "updatedAt": "2026-09-17T17:39:58.537Z"
+    },
+    {
+      "id": 15,
+      "externalId": "15",
+      "name": "Rajeev Menon",
+      "email": "rajeev.m9@gmail.com",
+      "phone": "8890123456",
+      "branch": "Mechanical",
+      "cgpa": "5.2",
+      "skills": [
+        "MS Office"
+      ],
+      "projects": [],
+      "internships": [],
+      "certifications": [],
+      "score": 0,
+      "category": "NEEDS_IMPROVEMENT",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$7A9w5.Oxpxf4vlfXECYd8u6hM7A..3Y1XfbuGCVKkwrwXmqLIYu/y",
+      "mustChangePassword": false,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Rajeev%20Menon",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-15/view",
+      "bio": "Final year Mechanical undergraduate candidate.",
+      "createdAt": "2026-09-17T12:59:15.525Z",
+      "updatedAt": "2026-09-17T17:39:59.047Z"
+    },
+    {
+      "id": 17,
+      "externalId": "TEST-NEW-999",
+      "name": "Priya Sharma",
+      "email": "priya.sharma999@gmail.com",
+      "phone": null,
+      "branch": "Computer Science",
+      "cgpa": "9.2",
+      "skills": [
+        "React",
+        "TypeScript",
+        "Node.js"
+      ],
+      "projects": [
+        "Campus Portal"
+      ],
+      "internships": [
+        "SDE Intern"
+      ],
+      "certifications": [
+        "AWS Certified"
+      ],
+      "score": 8,
+      "category": "STRONG",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$4PnSEruTyUfNse3.2.d3/ObkoqfbF2Cd6VAgAtRfmk4GlesDoeWdO",
+      "mustChangePassword": true,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya%20Sharma",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-TEST-NEW-999/view",
+      "bio": "Final year Computer Science undergraduate candidate.",
+      "createdAt": "2026-09-17T15:55:20.000Z",
+      "updatedAt": "2026-09-17T15:55:20.000Z"
+    },
+    {
+      "id": 18,
+      "externalId": "PERSIST-999",
+      "name": "Tanvi Kapoor",
+      "email": "tanvi.k@gmail.com",
+      "phone": null,
+      "branch": "Computer Science",
+      "cgpa": "9.8",
+      "skills": [
+        "React",
+        "Node.js",
+        "Python",
+        "AWS"
+      ],
+      "projects": [
+        "AI Analytics"
+      ],
+      "internships": [
+        "Intern at Microsoft"
+      ],
+      "certifications": [
+        "Azure Solutions Architect"
+      ],
+      "score": 8,
+      "category": "STRONG",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$7dUxLDub7MgpGdVuAohAEOakfpAQ4RJ6dlmBsTNsRQH/OSXM9TSR.",
+      "mustChangePassword": true,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Tanvi%20Kapoor",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-PERSIST-999/view",
+      "bio": "Final year Computer Science undergraduate candidate.",
+      "createdAt": "2026-09-17T16:10:05.869Z",
+      "updatedAt": "2026-09-17T16:10:05.869Z"
+    },
+    {
       "id": 1,
       "externalId": "1",
       "name": "Aarav Gupta",
       "email": "aarav.g@gmail.com",
       "phone": "9876543210",
       "branch": "Computer Science",
-      "cgpa": 9.3,
+      "cgpa": "9.3",
       "skills": [
         "MERN",
         "AWS",
@@ -49,541 +637,52 @@
       "isOverridden": false,
       "overrideCategory": null,
       "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
       "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.427Z",
-      "updatedAt": "2026-09-17T12:44:06.947Z",
+      "passwordHash": "$2b$10$ru030OZGABJj2qrzTnvfeO5RNjhxMwYa9HCnnSjzjLZa2ixB1e3hm",
+      "mustChangePassword": false,
       "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Aarav%20Gupta",
       "resumeUrl": "https://drive.google.com/file/d/sample-resume-1/view",
       "bio": "Final year Computer Science undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$2RSXkGXFYliVT9WVDndUPeVvIyEui9aIKFg3d7dEY/n5aNjNW7UA2"
+      "createdAt": "2026-09-17T12:59:08.483Z",
+      "updatedAt": "2026-09-17T17:39:51.745Z"
     },
     {
-      "id": 2,
-      "externalId": "2",
-      "name": "Ishita Verma",
-      "email": "ishita.v21@gmail.com",
-      "phone": "8765432109",
-      "branch": "Information Technology",
-      "cgpa": 8.9,
+      "id": 35,
+      "externalId": "8624",
+      "name": "Rupesh",
+      "email": "rupesh.2k5chandra@gmail.com",
+      "phone": "8500617107",
+      "branch": "Computer Science",
+      "cgpa": "8.5",
       "skills": [
-        "React",
-        "Node.js",
-        "MongoDB"
+        "React"
       ],
       "projects": [
-        "Task Management System"
+        "RAG"
       ],
       "internships": [
-        "Frontend Intern at TCS"
+        "Infosys"
       ],
       "certifications": [
-        "Google UX Design"
+        "AWS"
       ],
-      "score": 7,
+      "score": 6,
       "category": "AVERAGE",
       "isOverridden": false,
       "overrideCategory": null,
       "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.428Z",
-      "updatedAt": "2026-09-17T09:18:02.603Z",
       "overriddenBy": null,
       "overriddenAt": null,
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ishita%20Verma",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-2/view",
-      "bio": "Final year Information Technology undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$di8eU7isc9dXg8vyQAUa2Oh4TQK5xwLpshE.7go.7UdXHU/RLDX9C"
-    },
-    {
-      "id": 3,
-      "externalId": "3",
-      "name": "Rohan Nair",
-      "email": "rnair.dev@gmail.com",
-      "phone": "7654321098",
-      "branch": "Computer Science",
-      "cgpa": 9.1,
-      "skills": [
-        "Python",
-        "Django",
-        "React"
-      ],
-      "projects": [
-        "Social Media Dashboard",
-        "Portfolio App"
-      ],
-      "internships": [
-        "Web Dev Intern at Infosys"
-      ],
-      "certifications": [
-        "IBM Full Stack Software Developer"
-      ],
-      "score": 8,
-      "category": "STRONG",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
       "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.429Z",
-      "updatedAt": "2026-09-17T09:15:23.429Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan%20Nair",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-3/view",
-      "bio": "Final year Computer Science undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$FJI3yNAB6q8uXLaIAonZeetNfc7C1c4yVFDUO7jpub7xurxBuJK5G"
-    },
-    {
-      "id": 4,
-      "externalId": "4",
-      "name": "Megha Sharma",
-      "email": "megha.sharma99@gmail.com",
-      "phone": "6543210987",
-      "branch": "Software Engineering",
-      "cgpa": 8.5,
-      "skills": [
-        "Java",
-        "Spring Boot",
-        "React"
-      ],
-      "projects": [
-        "Inventory Management System"
-      ],
-      "internships": [
-        "Java Developer Intern at Wipro"
-      ],
-      "certifications": [
-        "Oracle Certified Associate"
-      ],
-      "score": 7,
-      "category": "AVERAGE",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.431Z",
-      "updatedAt": "2026-09-17T09:15:23.431Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Megha%20Sharma",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-4/view",
-      "bio": "Final year Software Engineering undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$cTJjrCyopkl0Rm5OGALZn.IWhKww92LPj42PQJmJXdtCT13ocQlz2"
-    },
-    {
-      "id": 5,
-      "externalId": "5",
-      "name": "Karthik Reddy",
-      "email": "karthik.r@gmail.com",
-      "phone": "9012345678",
-      "branch": "Computer Science",
-      "cgpa": 8.2,
-      "skills": [
-        "JavaScript",
-        "Express",
-        "SQL"
-      ],
-      "projects": [
-        "Weather App",
-        "Blog Platform"
-      ],
-      "internships": [
-        "Software Intern at Tech Mahindra"
-      ],
-      "certifications": [
-        "HackerRank JavaScript (Basic)"
-      ],
-      "score": 7,
-      "category": "AVERAGE",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.432Z",
-      "updatedAt": "2026-09-17T09:15:23.432Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Karthik%20Reddy",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-5/view",
-      "bio": "Final year Computer Science undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$l7BccdkYGhgK/e7qPmM8XeXU6UEldZxULp9WVrbZTfxhb5f3eQQDK"
-    },
-    {
-      "id": 6,
-      "externalId": "6",
-      "name": "Sneha Desai",
-      "email": "snehad.22@gmail.com",
-      "phone": "8123456790",
-      "branch": "Electronics",
-      "cgpa": 7.6,
-      "skills": [
-        "HTML",
-        "CSS",
-        "JavaScript"
-      ],
-      "projects": [
-        "Personal Website"
-      ],
-      "internships": [],
-      "certifications": [],
-      "score": 4,
-      "category": "NEEDS_IMPROVEMENT",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.433Z",
-      "updatedAt": "2026-09-17T09:15:23.433Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sneha%20Desai",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-6/view",
-      "bio": "Final year Electronics undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$gvmCRC.4DuAp.0afuEdcKuU6xRbnab/RkcjPzp.yVGbUDPSEo6Rjy"
-    },
-    {
-      "id": 7,
-      "externalId": "7",
-      "name": "Aditya Kumar",
-      "email": "aditya.k45@gmail.com",
-      "phone": "9123456781",
-      "branch": "Mechanical",
-      "cgpa": 7.1,
-      "skills": [
-        "Python",
-        "SQL"
-      ],
-      "projects": [
-        "Data Analysis on Sales Data"
-      ],
-      "internships": [],
-      "certifications": [
-        "Google Data Analytics"
-      ],
-      "score": 4.5,
-      "category": "NEEDS_IMPROVEMENT",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.435Z",
-      "updatedAt": "2026-09-17T09:15:23.435Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Aditya%20Kumar",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-7/view",
-      "bio": "Final year Mechanical undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$GaFoSNNdBmzyxdtDa2q/.eXclEyIcOT5bkT0LkMdGnurVWDMm9e8e"
-    },
-    {
-      "id": 8,
-      "externalId": "8",
-      "name": "Neha Singh",
-      "email": "nehasingh.01@gmail.com",
-      "phone": "7123456789",
-      "branch": "Information Technology",
-      "cgpa": 7.8,
-      "skills": [
-        "Java",
-        "HTML",
-        "CSS"
-      ],
-      "projects": [
-        "Library Management System"
-      ],
-      "internships": [
-        "Trainee at WebX"
-      ],
-      "certifications": [],
-      "score": 5,
-      "category": "AVERAGE",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.436Z",
-      "updatedAt": "2026-09-17T09:15:23.436Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Neha%20Singh",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-8/view",
-      "bio": "Final year Information Technology undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$h2JEcADASMLhHW1nSWM0leLNZk8kpcfmUM9XpYb5F1tecT4cTvZji"
-    },
-    {
-      "id": 9,
-      "externalId": "9",
-      "name": "Vivek Joshi",
-      "email": "vivek.j@gmail.com",
-      "phone": "8234567890",
-      "branch": "Computer Science",
-      "cgpa": 6.9,
-      "skills": [
-        "C++",
-        "HTML"
-      ],
-      "projects": [
-        "Calculator App"
-      ],
-      "internships": [],
-      "certifications": [],
-      "score": 2.5,
-      "category": "NEEDS_IMPROVEMENT",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.437Z",
-      "updatedAt": "2026-09-17T09:15:23.437Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Vivek%20Joshi",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-9/view",
-      "bio": "Final year Computer Science undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$AJopW2fCspXhiwjZj.aQAutr5UeR.phrYCQH5Rd/UpB1UKQj0FS.O"
-    },
-    {
-      "id": 10,
-      "externalId": "10",
-      "name": "Pooja Patel",
-      "email": "poojap.tech@gmail.com",
-      "phone": "9345678901",
-      "branch": "Civil",
-      "cgpa": 7.4,
-      "skills": [
-        "Python",
-        "Excel"
-      ],
-      "projects": [
-        "Student Database System"
-      ],
-      "internships": [],
-      "certifications": [],
-      "score": 3.5,
-      "category": "NEEDS_IMPROVEMENT",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.439Z",
-      "updatedAt": "2026-09-17T09:15:23.439Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Pooja%20Patel",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-10/view",
-      "bio": "Final year Civil undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$C7N6eN2Tqr6CYf1R7SlgkuVjqqwQLOiFsW/6by9ZxBTtgA4ntJL3a"
-    },
-    {
-      "id": 11,
-      "externalId": "11",
-      "name": "Amit Chawla",
-      "email": "amit.c00@gmail.com",
-      "phone": "9456789012",
-      "branch": "Civil",
-      "cgpa": 5.9,
-      "skills": [
-        "MS Word"
-      ],
-      "projects": [],
-      "internships": [],
-      "certifications": [],
-      "score": 0,
-      "category": "NEEDS_IMPROVEMENT",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.440Z",
-      "updatedAt": "2026-09-17T09:15:23.440Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Amit%20Chawla",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-11/view",
-      "bio": "Final year Civil undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$wctXFI/LUCDyxI5NoeTUhO/QSWo4vCNSprklTOxTFFEfIfyvKfOVK"
-    },
-    {
-      "id": 12,
-      "externalId": "12",
-      "name": "Suman Rao",
-      "email": "suman.rao1@gmail.com",
-      "phone": "8567890123",
-      "branch": "Mechanical",
-      "cgpa": 6.1,
-      "skills": [
-        "Windows",
-        "Data Entry"
-      ],
-      "projects": [
-        "Basic HTML Page"
-      ],
-      "internships": [],
-      "certifications": [],
-      "score": 2,
-      "category": "NEEDS_IMPROVEMENT",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.441Z",
-      "updatedAt": "2026-09-17T09:15:23.441Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Suman%20Rao",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-12/view",
-      "bio": "Final year Mechanical undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$LdrmzwQu9FS6ZyP/YH5Ysen6aVOv8y1QthitBa2L08GObtsr8LLwK"
-    },
-    {
-      "id": 13,
-      "externalId": "13",
-      "name": "Deepak Tiwari",
-      "email": "deepakt.77@gmail.com",
-      "phone": "7678901234",
-      "branch": "Electronics",
-      "cgpa": 5.4,
-      "skills": [
-        "MS Excel"
-      ],
-      "projects": [],
-      "internships": [],
-      "certifications": [],
-      "score": 0,
-      "category": "NEEDS_IMPROVEMENT",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.442Z",
-      "updatedAt": "2026-09-17T09:15:23.442Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Deepak%20Tiwari",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-13/view",
-      "bio": "Final year Electronics undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$qIc0lk9qfz85D9E1.ao7WeWRyJeGDjmrIVKSFMkt0OvqkZnhCVNFy"
-    },
-    {
-      "id": 14,
-      "externalId": "14",
-      "name": "Meera Reddy",
-      "email": "meera.r3@gmail.com",
-      "phone": "9789012345",
-      "branch": "Chemical",
-      "cgpa": 6.3,
-      "skills": [
-        "Basic Computer"
-      ],
-      "projects": [],
-      "internships": [],
-      "certifications": [],
-      "score": 1,
-      "category": "NEEDS_IMPROVEMENT",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.443Z",
-      "updatedAt": "2026-09-17T09:15:23.443Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Meera%20Reddy",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-14/view",
-      "bio": "Final year Chemical undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$5nJg5vutPpBXPc3RKcFwJOx/pH8JSRuot96FSlkl4t4pCEGO8ebC2"
-    },
-    {
-      "id": 15,
-      "externalId": "15",
-      "name": "Rajeev Menon",
-      "email": "rajeev.m9@gmail.com",
-      "phone": "8890123456",
-      "branch": "Mechanical",
-      "cgpa": 5.2,
-      "skills": [
-        "MS Office"
-      ],
-      "projects": [],
-      "internships": [],
-      "certifications": [],
-      "score": 0,
-      "category": "NEEDS_IMPROVEMENT",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "createdAt": "2026-09-17T09:15:23.444Z",
-      "updatedAt": "2026-09-17T09:15:23.444Z",
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Rajeev%20Menon",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-15/view",
-      "bio": "Final year Mechanical undergraduate candidate.",
-      "mustChangePassword": false,
-      "passwordHash": "$2b$10$ki/4X1FJPckZI5FjmcKFt.A.H5eS7l/XGJfHX2zlDZqZWRFIB0vRG"
-    },
-    {
-      "id": 16,
-      "externalId": "TOP-001",
-      "name": "Aakash Verma",
-      "email": "aakash.v@gmail.com",
-      "phone": null,
-      "branch": "Computer Science",
-      "cgpa": 9.5,
-      "skills": [
-        "React",
-        "Node.js",
-        "Python",
-        "AWS",
-        "PostgreSQL"
-      ],
-      "projects": [
-        "AI Screening System",
-        "E-Commerce Platform"
-      ],
-      "internships": [
-        "Software Engineer Intern at Google"
-      ],
-      "certifications": [
-        "AWS Certified Solutions Architect"
-      ],
-      "score": 9,
-      "category": "STRONG",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "passwordHash": "$2b$10$D5PRh/kaPgnLES76u.8vsuccUlmh9RqLZHdAF2GWvavnaG3HE9Yoa",
+      "passwordHash": "$2b$10$Iuo2MKpi914kM28lAhBUiON1CKO69UECbvTqxJvL/t9xrT3n1J9bC",
       "mustChangePassword": true,
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Aakash%20Verma",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-TOP-001/view",
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Rupesh",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-8624/view",
       "bio": "Final year Computer Science undergraduate candidate.",
-      "createdAt": "2026-09-17T16:00:58.076Z",
-      "updatedAt": "2026-09-17T16:00:58.076Z"
-    },
-    {
-      "id": 17,
-      "externalId": "ST-999",
-      "name": "Zoya Khan",
-      "email": "zoya.k@gmail.com",
-      "phone": null,
-      "branch": "Information Technology",
-      "cgpa": 9.7,
-      "skills": [
-        "React",
-        "Node.js",
-        "Python"
-      ],
-      "projects": [
-        "Project A"
-      ],
-      "internships": [
-        "Intern at Google"
-      ],
-      "certifications": [
-        "AWS Certified"
-      ],
-      "score": 8,
-      "category": "STRONG",
-      "isOverridden": false,
-      "overrideCategory": null,
-      "overrideReason": null,
-      "isReviewed": false,
-      "passwordHash": "$2b$10$ENnfmgQd5ZOo2pYpUGjOYeeNc3.E27JEUG03XrPYKvB/sH3y3W8BK",
-      "mustChangePassword": true,
-      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoya%20Khan",
-      "resumeUrl": "https://drive.google.com/file/d/sample-resume-ST-999/view",
-      "bio": "Final year Information Technology undergraduate candidate.",
-      "createdAt": "2026-09-17T16:11:06.037Z",
-      "updatedAt": "2026-09-17T16:11:06.037Z"
+      "createdAt": "2026-09-17T18:13:09.429Z",
+      "updatedAt": "2026-09-17T18:13:09.429Z"
     }
   ],
   "auditLogs": [

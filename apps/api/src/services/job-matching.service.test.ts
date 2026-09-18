@@ -45,6 +45,20 @@ describe('Job Matching & Shortlisting Engine', () => {
     category: 'NEEDS_IMPROVEMENT',
   };
 
+  const student2Qualified: CandidateProfile = {
+    externalId: '3',
+    name: 'Ishita Verma',
+    email: 'ishita@gmail.com',
+    branch: 'Information Technology',
+    cgpa: 8.8,
+    skills: ['React', 'Node.js'],
+    projects: ['Task Tracker'],
+    internships: ['TCS Intern'],
+    certifications: [],
+    score: 7,
+    category: 'AVERAGE',
+  };
+
   it('evaluates high match candidate as EXCELLENT_FIT', () => {
     const match = matchCandidateToJob(student1, job);
     expect(match.matchScore).toBeGreaterThanOrEqual(80);
@@ -64,9 +78,17 @@ describe('Job Matching & Shortlisting Engine', () => {
     expect(match.mandatorySkillsMissing).toEqual(['React', 'Node.js']);
   });
 
-  it('correctly ranks candidates in descending order of fit', () => {
-    const ranked = rankCandidatesForJob([student2, student1], job);
+  it('correctly ranks qualified candidates in descending order of fit', () => {
+    const ranked = rankCandidatesForJob([student2Qualified, student1], job);
+    expect(ranked.length).toBe(2);
     expect(ranked[0].candidate.name).toBe('Aarav Gupta');
-    expect(ranked[1].candidate.name).toBe('Pooja Patel');
+    expect(ranked[1].candidate.name).toBe('Ishita Verma');
+  });
+
+  it('strictly filters out candidates below min CGPA cutoff', () => {
+    const ranked = rankCandidatesForJob([student1, student2], job);
+    expect(ranked.length).toBe(1);
+    expect(ranked[0].candidate.name).toBe('Aarav Gupta');
+    expect(ranked.some((r) => r.candidate.name === 'Pooja Patel')).toBe(false);
   });
 });
