@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 import { prisma } from '../db.js';
 import { enrichStudent } from './students.routes.js';
 import { rankCandidatesForJob, JobRequirement } from '../services/job-matching.service.js';
@@ -24,8 +24,8 @@ function parseList(val: any): string[] {
   return [];
 }
 
-// POST /api/jobs/match - Rank cohort against company requirements
-router.post('/match', requireAuth, async (req, res, next) => {
+// POST /api/jobs/match - Rank cohort against company requirements (Protected: Coordinator/Admin only)
+router.post('/match', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req, res, next) => {
   try {
     const raw = jobSchema.parse(req.body);
     const job: JobRequirement = {
@@ -58,8 +58,8 @@ router.post('/match', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/jobs/export-shortlist - Export ranked match shortlist as CSV
-router.post('/export-shortlist', requireAuth, async (req, res, next) => {
+// POST /api/jobs/export-shortlist - Export ranked match shortlist as CSV (Protected: Coordinator/Admin only)
+router.post('/export-shortlist', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req, res, next) => {
   try {
     const raw = jobSchema.parse(req.body);
     const job: JobRequirement = {

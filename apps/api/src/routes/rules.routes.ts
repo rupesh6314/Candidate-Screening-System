@@ -31,8 +31,8 @@ router.get('/', requireAuth, (_req, res) => {
   res.json({ rules, ...rules });
 });
 
-// POST /api/rules/preview - Preview impact of new weights on the cohort
-router.post('/preview', requireAuth, async (req, res, next) => {
+// POST /api/rules/preview - Preview impact of new weights on the cohort (Protected: Coordinator/Admin only)
+router.post('/preview', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req, res, next) => {
   try {
     const proposed = rulesetSchema.partial().parse(req.body);
     const students = await prisma.student.findMany();

@@ -6,6 +6,31 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+// Automatically attach Bearer token to all requests from local storage
+api.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem('screening_token');
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (_) {}
+  return config;
+});
+
+// Intercept 401 Unauthorized responses to clear expired local tokens
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      try {
+        localStorage.removeItem('screening_token');
+      } catch (_) {}
+    }
+    return Promise.reject(error);
+  }
+);
+
 export type Category = 'STRONG' | 'AVERAGE' | 'NEEDS_IMPROVEMENT';
 
 export interface ScoreItemBreakdown {

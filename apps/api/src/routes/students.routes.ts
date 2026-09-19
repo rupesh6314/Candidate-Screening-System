@@ -239,8 +239,10 @@ export function enrichStudent(student: any) {
     ? student.overrideCategory
     : evaluation.category;
 
+  const { passwordHash: _, ...safeStudent } = student;
+
   return {
-    ...student,
+    ...safeStudent,
     cgpa: numericCgpa,
     score: evaluation.score,
     maxScore: evaluation.maxScore,
@@ -301,8 +303,8 @@ function prepareStudentData(raw: z.infer<typeof studentSchema>) {
   };
 }
 
-// GET /api/students - Filtered list with pagination and explainability
-router.get('/', requireAuth, async (req, res, next) => {
+// GET /api/students - Filtered list with pagination and explainability (Protected: Coordinator/Admin only)
+router.get('/', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req, res, next) => {
   try {
     const query = z
       .object({
@@ -438,8 +440,8 @@ router.get('/', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/students/export - Export shortlisted candidates to CSV
-router.get('/export', requireAuth, async (req, res, next) => {
+// GET /api/students/export - Export shortlisted candidates to CSV (Protected: Coordinator/Admin only)
+router.get('/export', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req, res, next) => {
   try {
     const students = await prisma.student.findMany({
       orderBy: [{ score: 'desc' }, { cgpa: 'desc' }, { name: 'asc' }],
@@ -497,8 +499,8 @@ router.get('/export', requireAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/students/compare - Side-by-side comparison of 2-4 students
-router.post('/compare', requireAuth, async (req, res, next) => {
+// POST /api/students/compare - Side-by-side comparison of 2-4 students (Protected: Coordinator/Admin only)
+router.post('/compare', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req, res, next) => {
   try {
     const schema = z.object({
       ids: z.array(z.number().int()).min(2).max(4),
@@ -673,6 +675,13 @@ router.get('/:id', requireAuth, async (req, res, next) => {
     const id = Number(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({ error: 'Invalid student ID' });
+    }
+
+    // Role check: Students can only view their own profile
+    if (req.user?.role === 'STUDENT' && req.user.studentId !== id && Number(req.user.id) !== id) {
+      return res.status(403).json({
+        error: 'Access denied: You are only authorized to view your own profile.',
+      });
     }
 
     const student = await prisma.student.findUnique({ where: { id } });

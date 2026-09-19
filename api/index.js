@@ -1047,29 +1047,129 @@ var prisma = new Proxy({}, {
 
 // apps/api/src/middleware/auth.ts
 import jwt from "jsonwebtoken";
+function extractToken(req) {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const parts = authHeader.trim().split(/\s+/);
+    if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
+      return parts[1];
+    }
+    if (parts.length === 1 && parts[0].length > 10) {
+      return parts[0];
+    }
+  }
+  if (req.cookies?.screening_token) {
+    return req.cookies.screening_token;
+  }
+  if (typeof req.query?.token === "string" && req.query.token.trim()) {
+    return req.query.token.trim();
+  }
+  return null;
+}
 async function requireAuth(req, res, next) {
   try {
-    const token = req.cookies?.screening_token;
+    const token = extractToken(req);
     if (!token) {
-      req.user = { id: "coord-1", email: "coordinator@campus.edu", role: "COORDINATOR", name: "Placement Coordinator" };
+      return res.status(401).json({
+        error: "Authentication required. Please log in to access this resource."
+      });
+    }
+    const payload = jwt.verify(token, env.JWT_SECRET);
+    if (!payload || !payload.sub) {
+      return res.status(401).json({
+        error: "Invalid token payload. Please log in again."
+      });
+    }
+    if (payload.role === "STUDENT" || payload.studentId || payload.sub.startsWith("student-")) {
+      const studentIdNum = payload.studentId || parseInt(payload.sub.replace("student-", ""), 10);
+      let student = null;
+      try {
+        if (!isNaN(studentIdNum)) {
+          student = await prisma.student.findUnique({ where: { id: studentIdNum } });
+        }
+        if (!student && payload.email) {
+          student = await prisma.student.findFirst({
+            where: { email: { equals: payload.email.toLowerCase(), mode: "insensitive" } }
+          });
+        }
+      } catch (_) {
+        try {
+          student = await prisma.student.findFirst({
+            where: { id: studentIdNum }
+          });
+        } catch (_2) {
+        }
+      }
+      if (!student) {
+        return res.status(401).json({
+          error: "Student account associated with this session no longer exists."
+        });
+      }
+      req.user = {
+        id: String(student.id),
+        email: student.email,
+        role: "STUDENT",
+        name: student.name,
+        studentId: student.id
+      };
       return next();
     }
-    const p = jwt.verify(token, env.JWT_SECRET);
-    const u = await prisma.user.findUnique({ where: { id: p.sub } });
-    if (!u) {
-      req.user = { id: "coord-1", email: "coordinator@campus.edu", role: "COORDINATOR", name: "Placement Coordinator" };
-      return next();
+    let user = null;
+    try {
+      user = await prisma.user.findUnique({ where: { id: payload.sub } });
+      if (!user && payload.email) {
+        user = await prisma.user.findFirst({
+          where: { email: { equals: payload.email.toLowerCase(), mode: "insensitive" } }
+        });
+      }
+    } catch (_) {
+      try {
+        user = await prisma.user.findFirst({ where: { id: payload.sub } });
+      } catch (_2) {
+      }
     }
-    req.user = { id: u.id, email: u.email, role: u.role, name: u.name };
-    next();
-  } catch {
-    req.user = { id: "coord-1", email: "coordinator@campus.edu", role: "COORDINATOR", name: "Placement Coordinator" };
-    next();
+    if (!user) {
+      const adminEmail = process.env.ADMIN_EMAIL || "admin@placement.edu";
+      if (payload.sub === "cuid-admin-1" || payload.email === adminEmail) {
+        req.user = {
+          id: "cuid-admin-1",
+          email: adminEmail,
+          role: payload.role || "ADMIN",
+          name: "Placement Officer"
+        };
+        return next();
+      }
+      return res.status(401).json({
+        error: "Coordinator account associated with this session was not found."
+      });
+    }
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role || "COORDINATOR",
+      name: user.name
+    };
+    return next();
+  } catch (err) {
+    return res.status(401).json({
+      error: "Session expired or invalid token. Please log in again."
+    });
   }
 }
-var requireRole = (...roles) => (req, res, next) => {
-  if (!req.user || !roles.includes(req.user.role)) return res.status(403).json({ error: "Insufficient permissions" });
-  next();
+var requireRole = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        error: "Authentication required. Please log in."
+      });
+    }
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        error: `Access denied: Insufficient permissions for ${req.user.role}. Required role: ${roles.join(" or ")}.`
+      });
+    }
+    next();
+  };
 };
 
 // apps/api/src/services/audit.service.ts
@@ -1120,7 +1220,7 @@ router.post("/login", async (req, res, next) => {
         isMatch = await bcrypt2.compare(body.password.trim(), adminUser.passwordHash);
       }
       if (isMatch) {
-        const token = jwt2.sign({ sub: adminUser.id, role: adminUser.role }, env.JWT_SECRET, {
+        const token = jwt2.sign({ sub: adminUser.id, role: adminUser.role, email: adminUser.email }, env.JWT_SECRET, {
           expiresIn: "8h"
         });
         res.cookie("screening_token", token, {
@@ -1131,6 +1231,7 @@ router.post("/login", async (req, res, next) => {
         });
         await audit(adminUser.id, "LOGIN", "AUTH");
         return res.json({
+          token,
           user: {
             id: adminUser.id,
             email: adminUser.email,
@@ -1175,7 +1276,7 @@ router.post("/login", async (req, res, next) => {
       }
       if (isMatch) {
         const token = jwt2.sign(
-          { sub: `student-${student.id}`, role: "STUDENT", studentId: student.id },
+          { sub: `student-${student.id}`, role: "STUDENT", studentId: student.id, email: student.email },
           env.JWT_SECRET,
           { expiresIn: "8h" }
         );
@@ -1185,7 +1286,9 @@ router.post("/login", async (req, res, next) => {
           sameSite: env.NODE_ENV === "production" ? "none" : "lax",
           maxAge: 8 * 60 * 60 * 1e3
         });
+        const { passwordHash: _, ...safeStudent } = student;
         return res.json({
+          token,
           user: {
             id: String(student.id),
             email: student.email,
@@ -1197,7 +1300,7 @@ router.post("/login", async (req, res, next) => {
             mustChangePassword: Boolean(student.mustChangePassword)
           },
           student: {
-            ...student,
+            ...safeStudent,
             mustChangePassword: Boolean(student.mustChangePassword)
           }
         });
@@ -2534,8 +2637,9 @@ function enrichStudent(student) {
     rules
   );
   const effectiveCategory = student.isOverridden && student.overrideCategory ? student.overrideCategory : evaluation.category;
+  const { passwordHash: _, ...safeStudent } = student;
   return {
-    ...student,
+    ...safeStudent,
     cgpa: numericCgpa,
     score: evaluation.score,
     maxScore: evaluation.maxScore,
@@ -2592,7 +2696,7 @@ function prepareStudentData(raw) {
     isReviewed: false
   };
 }
-router2.get("/", requireAuth, async (req, res, next) => {
+router2.get("/", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res, next) => {
   try {
     const query = z3.object({
       minCgpa: z3.coerce.number().min(0).max(10).optional(),
@@ -2703,7 +2807,7 @@ router2.get("/", requireAuth, async (req, res, next) => {
     next(error);
   }
 });
-router2.get("/export", requireAuth, async (req, res, next) => {
+router2.get("/export", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res, next) => {
   try {
     const students = await prisma.student.findMany({
       orderBy: [{ score: "desc" }, { cgpa: "desc" }, { name: "asc" }]
@@ -2756,7 +2860,7 @@ router2.get("/export", requireAuth, async (req, res, next) => {
     next(error);
   }
 });
-router2.post("/compare", requireAuth, async (req, res, next) => {
+router2.post("/compare", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res, next) => {
   try {
     const schema = z3.object({
       ids: z3.array(z3.number().int()).min(2).max(4)
@@ -2906,6 +3010,11 @@ router2.get("/:id", requireAuth, async (req, res, next) => {
     const id = Number(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({ error: "Invalid student ID" });
+    }
+    if (req.user?.role === "STUDENT" && req.user.studentId !== id && Number(req.user.id) !== id) {
+      return res.status(403).json({
+        error: "Access denied: You are only authorized to view your own profile."
+      });
     }
     const student = await prisma.student.findUnique({ where: { id } });
     if (!student) {
@@ -3134,7 +3243,7 @@ var students_routes_default = router2;
 import { Router as Router3 } from "express";
 import { z as z4 } from "zod";
 var router3 = Router3();
-router3.get("/summary", requireAuth, async (req, res, next) => {
+router3.get("/summary", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res, next) => {
   try {
     const query = z4.object({
       minCgpa: z4.coerce.number().min(0).max(10).optional(),
@@ -3434,7 +3543,7 @@ function parseList(val) {
   if (typeof val === "string") return val.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
   return [];
 }
-router4.post("/match", requireAuth, async (req, res, next) => {
+router4.post("/match", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res, next) => {
   try {
     const raw = jobSchema.parse(req.body);
     const job = {
@@ -3463,7 +3572,7 @@ router4.post("/match", requireAuth, async (req, res, next) => {
     next(error);
   }
 });
-router4.post("/export-shortlist", requireAuth, async (req, res, next) => {
+router4.post("/export-shortlist", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res, next) => {
   try {
     const raw = jobSchema.parse(req.body);
     const job = {
@@ -3550,7 +3659,7 @@ router5.get("/", requireAuth, (_req, res) => {
   const rules = getActiveRuleset();
   res.json({ rules, ...rules });
 });
-router5.post("/preview", requireAuth, async (req, res, next) => {
+router5.post("/preview", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res, next) => {
   try {
     const proposed = rulesetSchema.partial().parse(req.body);
     const students = await prisma.student.findMany();
@@ -3600,7 +3709,7 @@ var rules_routes_default = router5;
 // apps/api/src/routes/audit.routes.ts
 import { Router as Router6 } from "express";
 var router6 = Router6();
-router6.get("/", requireAuth, async (_req, res, next) => {
+router6.get("/", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (_req, res, next) => {
   try {
     const logs = await prisma.auditLog.findMany({
       orderBy: { createdAt: "desc" },
@@ -3616,7 +3725,7 @@ var audit_routes_default = router6;
 // apps/api/src/routes/email.routes.ts
 import { Router as Router7 } from "express";
 var router7 = Router7();
-router7.get("/status", requireAuth, (_req, res) => {
+router7.get("/status", requireAuth, requireRole("ADMIN", "COORDINATOR"), (_req, res) => {
   const status = getEmailConfigStatus();
   res.json(status);
 });
@@ -3752,9 +3861,50 @@ var email_routes_default = router7;
 // apps/api/src/routes/drives.routes.ts
 import { Router as Router8 } from "express";
 var router8 = Router8();
-router8.get("/", async (_req, res) => {
+router8.get("/", requireAuth, async (req, res) => {
   try {
-    const drives = await prisma.companyDrive.findMany();
+    const drives = await prisma.companyDrive.findMany({
+      orderBy: { createdAt: "desc" }
+    });
+    if (req.user?.role === "STUDENT") {
+      const studentId = req.user.studentId;
+      let studentApps = [];
+      if (studentId) {
+        studentApps = await prisma.driveApplication.findMany({ where: { studentId } });
+      }
+      const safeDrives = drives.map((drive) => {
+        const app2 = studentApps.find((a) => a.driveId === drive.id);
+        const deadlineTime = new Date(drive.deadline).getTime();
+        const isExpired = deadlineTime < Date.now();
+        return {
+          id: drive.id,
+          companyName: drive.companyName,
+          logoUrl: drive.logoUrl,
+          role: drive.role,
+          jobType: drive.jobType,
+          ctc: drive.ctc,
+          stipend: drive.stipend,
+          location: drive.location,
+          minCgpa: drive.minCgpa,
+          allowedBranches: drive.allowedBranches,
+          requiredSkills: drive.requiredSkills,
+          description: drive.description,
+          selectionProcess: drive.selectionProcess,
+          serviceAgreement: drive.serviceAgreement,
+          startDate: drive.startDate,
+          deadline: drive.deadline,
+          isActive: drive.isActive,
+          isExpired,
+          studentResponse: app2 ? {
+            status: app2.status,
+            responseAt: app2.responseAt,
+            isShortlisted: app2.isShortlistedByCoordinator
+          } : null
+        };
+      });
+      res.json({ drives: safeDrives });
+      return;
+    }
     const applications = await prisma.driveApplication.findMany();
     const students = await prisma.student.findMany();
     const drivesWithStats = drives.map((drive) => {
@@ -3789,7 +3939,7 @@ router8.get("/", async (_req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch company drives" });
   }
 });
-router8.post("/", async (req, res) => {
+router8.post("/", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res) => {
   try {
     const {
       companyName,
@@ -3927,7 +4077,7 @@ Please log in to your Student Placement Portal and record your Opt-In response!`
     res.status(500).json({ error: error.message || "Failed to create campus drive" });
   }
 });
-router8.get("/:id", async (req, res) => {
+router8.get("/:id", requireAuth, async (req, res) => {
   try {
     const drive = await prisma.companyDrive.findUnique({ where: { id: req.params.id } });
     if (!drive) {
@@ -3939,7 +4089,7 @@ router8.get("/:id", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch drive details" });
   }
 });
-router8.get("/:id/applicants", async (req, res) => {
+router8.get("/:id/applicants", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res) => {
   try {
     const drive = await prisma.companyDrive.findUnique({ where: { id: req.params.id } });
     if (!drive) {
@@ -3952,6 +4102,7 @@ router8.get("/:id/applicants", async (req, res) => {
     const students = await prisma.student.findMany();
     const detailedApplicants = applications.map((app2) => {
       const s = students.find((st) => Number(st.id) === Number(app2.studentId));
+      const safeStudent = s ? enrichStudent(s) : null;
       return {
         id: app2.id,
         driveId: app2.driveId,
@@ -3972,7 +4123,7 @@ router8.get("/:id/applicants", async (req, res) => {
         studentSkills: Array.isArray(s?.skills) ? s.skills : [],
         studentResumeUrl: s?.resumeUrl || "",
         studentAvatarUrl: s?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s?.name || String(app2.studentId))}`,
-        student: s || null
+        student: safeStudent
       };
     });
     const optedIn = detailedApplicants.filter((a) => a.status === "OPTED_IN");
@@ -3999,7 +4150,7 @@ router8.get("/:id/applicants", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch applicants" });
   }
 });
-router8.patch("/:id/applicants/:studentId", async (req, res) => {
+router8.patch("/:id/applicants/:studentId", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res) => {
   try {
     const { isShortlisted, coordinatorNotes } = req.body;
     const driveIdParam = req.params.id;
@@ -4055,7 +4206,7 @@ router8.patch("/:id/applicants/:studentId", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to update applicant shortlist status" });
   }
 });
-router8.post("/:id/share-with-company", async (req, res) => {
+router8.post("/:id/share-with-company", requireAuth, requireRole("ADMIN", "COORDINATOR"), async (req, res) => {
   try {
     const drive = await prisma.companyDrive.findUnique({ where: { id: req.params.id } });
     if (!drive) {
@@ -4123,11 +4274,15 @@ router8.post("/:id/share-with-company", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to share candidate list with company" });
   }
 });
-router8.get("/student/:studentId", async (req, res) => {
+router8.get("/student/:studentId", requireAuth, async (req, res) => {
   try {
     const student = await resolveStudent(req.params.studentId, req.user?.email);
     if (!student) {
       res.status(404).json({ error: "Student not found" });
+      return;
+    }
+    if (req.user?.role === "STUDENT" && req.user.studentId && req.user.studentId !== student.id) {
+      res.status(403).json({ error: "Access denied: You are only authorized to view your own placement drive feed." });
       return;
     }
     const allDrives = await prisma.companyDrive.findMany();
@@ -4158,9 +4313,10 @@ router8.get("/student/:studentId", async (req, res) => {
       (d) => d.isExpired && (!d.studentResponse || d.studentResponse.status === "OPTED_OUT")
     );
     const allEligibleDrives = enrichedDrives;
+    const { passwordHash: _, ...safeStudent } = student;
     res.json({
       student: {
-        ...student,
+        ...safeStudent,
         mustChangePassword: Boolean(student.mustChangePassword)
       },
       feeds: {
@@ -4178,7 +4334,7 @@ router8.get("/student/:studentId", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch student drive feed" });
   }
 });
-router8.post("/student/:studentId/respond", async (req, res) => {
+router8.post("/student/:studentId/respond", requireAuth, async (req, res) => {
   try {
     const studentIdParam = req.params.studentId;
     const { driveId, status } = req.body;
@@ -4189,6 +4345,10 @@ router8.post("/student/:studentId/respond", async (req, res) => {
     const student = await resolveStudent(studentIdParam, req.user?.email);
     if (!student) {
       res.status(404).json({ error: "Student not found." });
+      return;
+    }
+    if (req.user?.role === "STUDENT" && req.user.studentId && req.user.studentId !== student.id) {
+      res.status(403).json({ error: "Access denied: You cannot submit placement responses for another student." });
       return;
     }
     const drive = await prisma.companyDrive.findUnique({ where: { id: driveId } });
@@ -4261,11 +4421,15 @@ async function resolveStudent(identifier, emailHint) {
   }
   return student;
 }
-router8.get("/student/:studentId/notifications", async (req, res) => {
+router8.get("/student/:studentId/notifications", requireAuth, async (req, res) => {
   try {
     const student = await resolveStudent(req.params.studentId, req.user?.email);
     if (!student) {
       res.json({ notifications: [] });
+      return;
+    }
+    if (req.user?.role === "STUDENT" && req.user.studentId && req.user.studentId !== student.id) {
+      res.status(403).json({ error: "Access denied: You cannot view notifications of another student." });
       return;
     }
     const notifModel = prisma.studentNotification || prisma.notification;
@@ -4283,43 +4447,52 @@ router8.get("/student/:studentId/notifications", async (req, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch notifications" });
   }
 });
-router8.get("/student/:studentId/profile", async (req, res) => {
+router8.get("/student/:studentId/profile", requireAuth, async (req, res) => {
   try {
     const student = await resolveStudent(req.params.studentId, req.user?.email);
     if (!student) {
       res.status(404).json({ error: "Student not found" });
       return;
     }
-    res.json({ student });
+    if (req.user?.role === "STUDENT" && req.user.studentId && req.user.studentId !== student.id) {
+      res.status(403).json({ error: "Access denied: You cannot view the profile of another student." });
+      return;
+    }
+    const { passwordHash: _, ...safeStudent } = student;
+    res.json({ student: safeStudent });
   } catch (error) {
     res.status(500).json({ error: error.message || "Failed to fetch student profile" });
   }
 });
-router8.put("/student/:studentId/profile", async (req, res) => {
+router8.put("/student/:studentId/profile", requireAuth, async (req, res) => {
   try {
-    const student = await resolveStudent(req.params.studentId, req.user?.email || req.body?.email);
+    const student = await resolveStudent(req.params.studentId, req.user?.email);
     if (!student) {
       res.status(404).json({ error: "Student not found" });
       return;
     }
-    const { name, phone, branch, cgpa, skills, resumeUrl, profileImage, bio } = req.body;
+    if (req.user?.role === "STUDENT" && req.user.studentId && req.user.studentId !== student.id) {
+      res.status(403).json({ error: "Access denied: You cannot edit the profile of another student." });
+      return;
+    }
+    const { name, phone, branch, skills, resumeUrl, profileImage, bio } = req.body;
     const updated = await prisma.student.update({
       where: { id: student.id },
       data: {
         ...name ? { name } : {},
         ...phone ? { phone } : {},
-        ...branch ? { branch } : {},
-        ...cgpa !== void 0 ? { cgpa: Number(cgpa) } : {},
+        ...branch && req.user?.role !== "STUDENT" ? { branch } : {},
         ...skills ? { skills: Array.isArray(skills) ? skills : skills.split(",").map((s) => s.trim()) } : {},
         ...resumeUrl ? { resumeUrl } : {},
         ...profileImage ? { profileImage } : {},
         ...bio ? { bio } : {}
       }
     });
+    const { passwordHash: _, ...safeStudent } = updated;
     res.json({
       success: true,
       message: "Student profile updated successfully.",
-      student: updated
+      student: safeStudent
     });
   } catch (error) {
     res.status(500).json({ error: error.message || "Failed to update student profile" });

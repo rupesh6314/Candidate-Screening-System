@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../db.js';
 import { sendEmail, getDriveAlertEmailHtml } from '../services/email.service.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
+import { enrichStudent } from './students.routes.js';
 
 export const router = Router();
 
@@ -8,10 +10,60 @@ export const router = Router();
 // 1. Placement Coordinator / Admin: List & Create Company Drives
 // --------------------------------------------------------------------------
 
-// GET /api/drives - List all company drives with applicant statistics
-router.get('/', async (_req: Request, res: Response): Promise<void> => {
+// GET /api/drives - List company drives (Student-safe for students, Full analytics for coordinators)
+router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
-    const drives = await prisma.companyDrive.findMany();
+    const drives = await prisma.companyDrive.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // 1. If requested by a Student candidate: return safe listing without coordinator notes/applicant details
+    if (req.user?.role === 'STUDENT') {
+      const studentId = req.user.studentId;
+      let studentApps: any[] = [];
+      if (studentId) {
+        studentApps = await prisma.driveApplication.findMany({ where: { studentId } });
+      }
+
+      const safeDrives = drives.map((drive: any) => {
+        const app = studentApps.find((a: any) => a.driveId === drive.id);
+        const deadlineTime = new Date(drive.deadline).getTime();
+        const isExpired = deadlineTime < Date.now();
+
+        return {
+          id: drive.id,
+          companyName: drive.companyName,
+          logoUrl: drive.logoUrl,
+          role: drive.role,
+          jobType: drive.jobType,
+          ctc: drive.ctc,
+          stipend: drive.stipend,
+          location: drive.location,
+          minCgpa: drive.minCgpa,
+          allowedBranches: drive.allowedBranches,
+          requiredSkills: drive.requiredSkills,
+          description: drive.description,
+          selectionProcess: drive.selectionProcess,
+          serviceAgreement: drive.serviceAgreement,
+          startDate: drive.startDate,
+          deadline: drive.deadline,
+          isActive: drive.isActive,
+          isExpired,
+          studentResponse: app
+            ? {
+                status: app.status,
+                responseAt: app.responseAt,
+                isShortlisted: app.isShortlistedByCoordinator,
+              }
+            : null,
+        };
+      });
+
+      res.json({ drives: safeDrives });
+      return;
+    }
+
+    // 2. If requested by Placement Coordinator / Admin: return complete applicant and dispatch stats
     const applications = await prisma.driveApplication.findMany();
     const students = await prisma.student.findMany();
 
@@ -54,8 +106,8 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
   }
 });
 
-// POST /api/drives - Post a new campus drive with targeted email notification dispatch
-router.post('/', async (req: Request, res: Response): Promise<void> => {
+// POST /api/drives - Post a new campus drive (Protected: Coordinator/Admin only)
+router.post('/', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       companyName,
@@ -196,7 +248,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 });
 
 // GET /api/drives/:id - Get detailed company drive with JD
-router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+router.get('/:id', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const drive = await prisma.companyDrive.findUnique({ where: { id: req.params.id } });
     if (!drive) {
@@ -209,8 +261,8 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// GET /api/drives/:id/applicants - Placement Coordinator view of opted-in & opted-out candidates
-router.get('/:id/applicants', async (req: Request, res: Response): Promise<void> => {
+// GET /api/drives/:id/applicants - Placement Coordinator view of opted-in & opted-out candidates (Protected)
+router.get('/:id/applicants', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req: Request, res: Response): Promise<void> => {
   try {
     const drive = await prisma.companyDrive.findUnique({ where: { id: req.params.id } });
     if (!drive) {
@@ -227,6 +279,7 @@ router.get('/:id/applicants', async (req: Request, res: Response): Promise<void>
     // Map application records with live student details
     const detailedApplicants = applications.map((app: any) => {
       const s = students.find((st: any) => Number(st.id) === Number(app.studentId));
+      const safeStudent = s ? enrichStudent(s) : null;
       return {
         id: app.id,
         driveId: app.driveId,
@@ -247,7 +300,7 @@ router.get('/:id/applicants', async (req: Request, res: Response): Promise<void>
         studentSkills: Array.isArray(s?.skills) ? s.skills : [],
         studentResumeUrl: s?.resumeUrl || '',
         studentAvatarUrl: s?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s?.name || String(app.studentId))}`,
-        student: s || null,
+        student: safeStudent,
       };
     });
 
@@ -280,8 +333,8 @@ router.get('/:id/applicants', async (req: Request, res: Response): Promise<void>
   }
 });
 
-// PATCH /api/drives/:id/applicants/:studentId - Coordinator shortlist / un-shortlist candidate profile
-router.patch('/:id/applicants/:studentId', async (req: Request, res: Response): Promise<void> => {
+// PATCH /api/drives/:id/applicants/:studentId - Coordinator shortlist / un-shortlist (Protected)
+router.patch('/:id/applicants/:studentId', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req: Request, res: Response): Promise<void> => {
   try {
     const { isShortlisted, coordinatorNotes } = req.body;
     const driveIdParam = req.params.id;
@@ -347,8 +400,8 @@ router.patch('/:id/applicants/:studentId', async (req: Request, res: Response): 
   }
 });
 
-// POST /api/drives/:id/share-with-company - Finalize & export candidate profiles to company recruiter
-router.post('/:id/share-with-company', async (req: Request, res: Response): Promise<void> => {
+// POST /api/drives/:id/share-with-company - Finalize & export candidate profiles (Protected)
+router.post('/:id/share-with-company', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req: Request, res: Response): Promise<void> => {
   try {
     const drive = await prisma.companyDrive.findUnique({ where: { id: req.params.id } });
     if (!drive) {
@@ -432,11 +485,17 @@ router.post('/:id/share-with-company', async (req: Request, res: Response): Prom
 // --------------------------------------------------------------------------
 
 // GET /api/drives/student/:studentId - Tailored company feeds for a student (Active, Not Opted-In, All)
-router.get('/student/:studentId', async (req: Request, res: Response): Promise<void> => {
+router.get('/student/:studentId', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
-    const student = await resolveStudent(req.params.studentId, (req as any).user?.email);
+    const student = await resolveStudent(req.params.studentId, req.user?.email);
     if (!student) {
       res.status(404).json({ error: 'Student not found' });
+      return;
+    }
+
+    // Role check: Students can only view their own feed
+    if (req.user?.role === 'STUDENT' && req.user.studentId && req.user.studentId !== student.id) {
+      res.status(403).json({ error: 'Access denied: You are only authorized to view your own placement drive feed.' });
       return;
     }
 
@@ -483,9 +542,11 @@ router.get('/student/:studentId', async (req: Request, res: Response): Promise<v
     // 3. All Eligible Drives: All drives matching student criteria
     const allEligibleDrives = enrichedDrives;
 
+    const { passwordHash: _, ...safeStudent } = student;
+
     res.json({
       student: {
-        ...student,
+        ...safeStudent,
         mustChangePassword: Boolean(student.mustChangePassword),
       },
       feeds: {
@@ -505,7 +566,7 @@ router.get('/student/:studentId', async (req: Request, res: Response): Promise<v
 });
 
 // POST /api/drives/student/:studentId/respond - Student Opt-In or Opt-Out
-router.post('/student/:studentId/respond', async (req: Request, res: Response): Promise<void> => {
+router.post('/student/:studentId/respond', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const studentIdParam = req.params.studentId;
     const { driveId, status } = req.body;
@@ -515,9 +576,15 @@ router.post('/student/:studentId/respond', async (req: Request, res: Response): 
       return;
     }
 
-    const student = await resolveStudent(studentIdParam, (req as any).user?.email);
+    const student = await resolveStudent(studentIdParam, req.user?.email);
     if (!student) {
       res.status(404).json({ error: 'Student not found.' });
+      return;
+    }
+
+    // Role check: Students cannot respond on behalf of other students
+    if (req.user?.role === 'STUDENT' && req.user.studentId && req.user.studentId !== student.id) {
+      res.status(403).json({ error: 'Access denied: You cannot submit placement responses for another student.' });
       return;
     }
 
@@ -602,13 +669,20 @@ async function resolveStudent(identifier: any, emailHint?: string) {
 }
 
 // GET /api/drives/student/:studentId/notifications - Fetch simulated email alerts
-router.get('/student/:studentId/notifications', async (req: Request, res: Response): Promise<void> => {
+router.get('/student/:studentId/notifications', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
-    const student = await resolveStudent(req.params.studentId, (req as any).user?.email);
+    const student = await resolveStudent(req.params.studentId, req.user?.email);
     if (!student) {
       res.json({ notifications: [] });
       return;
     }
+
+    // Role check: Students cannot view other students' notifications
+    if (req.user?.role === 'STUDENT' && req.user.studentId && req.user.studentId !== student.id) {
+      res.status(403).json({ error: 'Access denied: You cannot view notifications of another student.' });
+      return;
+    }
+
     const notifModel = (prisma as any).studentNotification || (prisma as any).notification;
     const notifications = await notifModel.findMany({
       where: {
@@ -626,37 +700,50 @@ router.get('/student/:studentId/notifications', async (req: Request, res: Respon
 });
 
 // GET /api/drives/student/:studentId/profile - Fetch student profile
-router.get('/student/:studentId/profile', async (req: Request, res: Response): Promise<void> => {
+router.get('/student/:studentId/profile', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
-    const student = await resolveStudent(req.params.studentId, (req as any).user?.email);
+    const student = await resolveStudent(req.params.studentId, req.user?.email);
     if (!student) {
       res.status(404).json({ error: 'Student not found' });
       return;
     }
-    res.json({ student });
+
+    // Role check: Students can only view their own profile
+    if (req.user?.role === 'STUDENT' && req.user.studentId && req.user.studentId !== student.id) {
+      res.status(403).json({ error: 'Access denied: You cannot view the profile of another student.' });
+      return;
+    }
+
+    const { passwordHash: _, ...safeStudent } = student;
+    res.json({ student: safeStudent });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Failed to fetch student profile' });
   }
 });
 
 // PUT /api/drives/student/:studentId/profile - Update mandatory student profile (Photo, Resume URL, Skills)
-router.put('/student/:studentId/profile', async (req: Request, res: Response): Promise<void> => {
+router.put('/student/:studentId/profile', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
-    const student = await resolveStudent(req.params.studentId, (req as any).user?.email || req.body?.email);
+    const student = await resolveStudent(req.params.studentId, req.user?.email);
     if (!student) {
       res.status(404).json({ error: 'Student not found' });
       return;
     }
 
-    const { name, phone, branch, cgpa, skills, resumeUrl, profileImage, bio } = req.body;
+    // Role check: Students can only update their own profile
+    if (req.user?.role === 'STUDENT' && req.user.studentId && req.user.studentId !== student.id) {
+      res.status(403).json({ error: 'Access denied: You cannot edit the profile of another student.' });
+      return;
+    }
+
+    const { name, phone, branch, skills, resumeUrl, profileImage, bio } = req.body;
 
     const updated = await prisma.student.update({
       where: { id: student.id },
       data: {
         ...(name ? { name } : {}),
         ...(phone ? { phone } : {}),
-        ...(branch ? { branch } : {}),
-        ...(cgpa !== undefined ? { cgpa: Number(cgpa) } : {}),
+        ...(branch && req.user?.role !== 'STUDENT' ? { branch } : {}),
         ...(skills ? { skills: Array.isArray(skills) ? skills : skills.split(',').map((s: string) => s.trim()) } : {}),
         ...(resumeUrl ? { resumeUrl } : {}),
         ...(profileImage ? { profileImage } : {}),
@@ -664,10 +751,12 @@ router.put('/student/:studentId/profile', async (req: Request, res: Response): P
       },
     });
 
+    const { passwordHash: _, ...safeStudent } = updated;
+
     res.json({
       success: true,
       message: 'Student profile updated successfully.',
-      student: updated,
+      student: safeStudent,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Failed to update student profile' });

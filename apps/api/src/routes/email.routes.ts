@@ -9,7 +9,7 @@ import {
 
 const router = Router();
 
-router.get('/status', requireAuth, (_req, res) => {
+router.get('/status', requireAuth, requireRole('ADMIN', 'COORDINATOR'), (_req, res) => {
   const status = getEmailConfigStatus();
   res.json(status);
 });

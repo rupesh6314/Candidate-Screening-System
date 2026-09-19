@@ -55,7 +55,7 @@ router.post('/login', async (req, res, next) => {
       }
 
       if (isMatch) {
-        const token = jwt.sign({ sub: adminUser.id, role: adminUser.role }, env.JWT_SECRET, {
+        const token = jwt.sign({ sub: adminUser.id, role: adminUser.role, email: adminUser.email }, env.JWT_SECRET, {
           expiresIn: '8h',
         });
 
@@ -69,6 +69,7 @@ router.post('/login', async (req, res, next) => {
         await audit(adminUser.id, 'LOGIN', 'AUTH');
 
         return res.json({
+          token,
           user: {
             id: adminUser.id,
             email: adminUser.email,
@@ -117,7 +118,7 @@ router.post('/login', async (req, res, next) => {
 
       if (isMatch) {
         const token = jwt.sign(
-          { sub: `student-${student.id}`, role: 'STUDENT', studentId: student.id },
+          { sub: `student-${student.id}`, role: 'STUDENT', studentId: student.id, email: student.email },
           env.JWT_SECRET,
           { expiresIn: '8h' }
         );
@@ -129,7 +130,10 @@ router.post('/login', async (req, res, next) => {
           maxAge: 8 * 60 * 60 * 1000,
         });
 
+        const { passwordHash: _, ...safeStudent } = student;
+
         return res.json({
+          token,
           user: {
             id: String(student.id),
             email: student.email,
@@ -141,7 +145,7 @@ router.post('/login', async (req, res, next) => {
             mustChangePassword: Boolean(student.mustChangePassword),
           },
           student: {
-            ...student,
+            ...safeStudent,
             mustChangePassword: Boolean(student.mustChangePassword),
           },
         });

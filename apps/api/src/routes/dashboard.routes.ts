@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 import { prisma } from '../db.js';
 import { getActiveRuleset } from '../services/rules.service.js';
 import { enrichStudent } from './students.routes.js';
 
 const router = Router();
 
-router.get('/summary', requireAuth, async (req, res, next) => {
+router.get('/summary', requireAuth, requireRole('ADMIN', 'COORDINATOR'), async (req, res, next) => {
   try {
     const query = z
       .object({

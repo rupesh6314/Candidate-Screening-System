@@ -10,7 +10,7 @@ import {
 import { api, Student } from '../api';
 
 interface LoginViewProps {
-  onLoginSuccess: (user: any, student?: Student) => void;
+  onLoginSuccess: (user: any, student?: Student, token?: string) => void;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
@@ -47,7 +47,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         password: loginPass,
       });
 
-      onLoginSuccess(res.data.user, res.data.student);
+      onLoginSuccess(res.data.user, res.data.student, res.data.token);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Authentication failed. Please verify your credentials.');
     } finally {

@@ -683,9 +683,56 @@
       "bio": "Final year Computer Science undergraduate candidate.",
       "createdAt": "2026-09-17T18:13:09.429Z",
       "updatedAt": "2026-09-18T05:51:42.300Z"
+    },
+    {
+      "id": 36,
+      "externalId": "20",
+      "name": "Chandra",
+      "email": "rupesh.madhuvarsu2005@gmail.com",
+      "phone": "9666307559",
+      "branch": "Computer Science",
+      "cgpa": "9",
+      "skills": [
+        "React",
+        "Node",
+        "Express",
+        "MongoDB",
+        "Authentication"
+      ],
+      "projects": [
+        "AI Voice Assistant, Car Rental Application, RAG"
+      ],
+      "internships": [
+        "Startup"
+      ],
+      "certifications": [
+        "AWS"
+      ],
+      "score": 9,
+      "category": "STRONG",
+      "isOverridden": false,
+      "overrideCategory": null,
+      "overrideReason": null,
+      "overriddenBy": null,
+      "overriddenAt": null,
+      "isReviewed": false,
+      "passwordHash": "$2b$10$p23Wmc2CNr0W6H578cy/IOPyhh55k/NUTB4zuEAFFqDm80cl/SgDG",
+      "mustChangePassword": true,
+      "profileImage": "https://api.dicebear.com/7.x/avataaars/svg?seed=Chandra",
+      "resumeUrl": "https://drive.google.com/file/d/sample-resume-20/view",
+      "bio": "Final year Computer Science undergraduate candidate.",
+      "createdAt": "2026-09-19T17:27:26.130Z",
+      "updatedAt": "2026-09-19T17:27:26.130Z"
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1789839635428-ultye",
+      "userId": "cmu5jddfj0000iphcmgfb7l8k",
+      "action": "LOGIN",
+      "entity": "AUTH",
+      "createdAt": "2026-09-19T17:40:35.428Z"
+    },
     {
       "id": "log-1789661466040-u6u59",
       "userId": "coord-1",

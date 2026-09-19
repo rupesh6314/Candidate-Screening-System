@@ -184,7 +184,7 @@ export default function App() {
   }, [fetchData, currentUser]);
 
   // Login handler
-  const handleLoginSuccess = (authUser: any, authStudent?: Student) => {
+  const handleLoginSuccess = (authUser: any, authStudent?: Student, token?: string) => {
     const formattedUser: User = {
       id: String(authUser.id),
       email: authUser.email,
@@ -194,6 +194,9 @@ export default function App() {
     setCurrentUser(formattedUser);
     try {
       localStorage.setItem('screening_user', JSON.stringify(formattedUser));
+      if (token) {
+        localStorage.setItem('screening_token', token);
+      }
     } catch (_) {}
 
     if (authUser.role === 'STUDENT') {
@@ -228,6 +231,7 @@ export default function App() {
       try {
         localStorage.removeItem('screening_user');
         localStorage.removeItem('screening_student');
+        localStorage.removeItem('screening_token');
       } catch (_) {}
       showToast('You have been signed out successfully.', 'info');
     }
@@ -524,12 +528,28 @@ export default function App() {
     }
   };
 
-  // Export CSV
-  const handleExportCsv = () => {
-    const params = buildQueryParams();
-    const queryStr = new URLSearchParams(params).toString();
-    window.open(`/api/students/export?${queryStr}`, '_blank');
-    showToast('Exporting candidate dataset to CSV...', 'info');
+  // Export CSV (Fully Authenticated Stream)
+  const handleExportCsv = async () => {
+    try {
+      showToast('Exporting candidate dataset to CSV...', 'info');
+      const params = buildQueryParams();
+      const res = await api.get('/api/students/export', {
+        params,
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `placement_shortlist_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      showToast('Candidate shortlist exported successfully!', 'success');
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to export CSV. Please verify authentication.', 'error');
+    }
   };
 
   // Reset Sample Dataset
