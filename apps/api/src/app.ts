@@ -55,6 +55,16 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Dedicated Strict Rate Limiter for Login Endpoint (Prevent Brute-Force Attacks)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
+});
+app.use('/api/auth/login', authLimiter);
+
 // Prevent caching on all API endpoints so updates and additions are immediately visible
 app.use('/api', (_req, res, next) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

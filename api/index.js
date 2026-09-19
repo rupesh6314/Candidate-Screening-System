@@ -4544,6 +4544,14 @@ var limiter = rateLimit({
   legacyHeaders: false
 });
 app.use(limiter);
+var authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1e3,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many authentication attempts. Please try again in 15 minutes." }
+});
+app.use("/api/auth/login", authLimiter);
 app.use("/api", (_req, res, next) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");
